@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@carbon/react", "@carbon/styles", "@carbon/icons-react"],
 };
 
 export default nextConfig;

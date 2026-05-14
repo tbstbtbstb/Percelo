@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
-import { X, MapPin } from "lucide-react";
+import { Tag } from "@carbon/react";
+import { Close, Location } from "@carbon/icons-react";
 import type { PrecedentPlan } from "@/types";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -46,54 +46,68 @@ export function PrecedentenModal({ open, onClose, plannen, gemeente }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div style={{ position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.5)" }}
+        onClick={onClose}
+      />
 
       {/* Panel */}
-      <div className="relative z-10 bg-background rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col border">
+      <div style={{
+        position: "relative", zIndex: 1,
+        backgroundColor: "var(--cds-layer-01, #f4f4f4)",
+        width: "100%", maxWidth: "32rem",
+        maxHeight: "80vh", display: "flex", flexDirection: "column",
+        border: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+      }}>
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b">
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", padding: "1.25rem 1.25rem 0.75rem", borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
           <div>
-            <div className="flex items-center gap-2 font-semibold text-sm">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 600, fontSize: "0.875rem" }}>
+              <Location size={16} style={{ color: "var(--cds-text-secondary, #525252)" }} />
               Vastgestelde bestemmingswijzigingen binnen 5km
             </div>
             {gemeente && (
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.125rem" }}>
                 Regio {gemeente} · afgelopen 8 jaar · {plannen.length} plan{plannen.length !== 1 ? "nen" : ""}
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5">
-            <X className="h-4 w-4" />
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cds-text-secondary, #525252)", flexShrink: 0, padding: "0.125rem", marginTop: "0.125rem" }}
+            aria-label="Sluiten"
+          >
+            <Close size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+        <div style={{ overflowY: "auto", flex: 1, padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
           {plannen.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)", textAlign: "center", padding: "2rem 0" }}>
               Geen vastgestelde wijzigingsplannen gevonden in de regio.
             </p>
           ) : (
             <>
               {wonenPlannen.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700 mb-2">
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#24a148", marginBottom: "0.5rem" }}>
                     Woningbouw-precedenten ({wonenPlannen.length})
                   </p>
-                  <div className="space-y-1.5">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
                     {wonenPlannen.map((p, i) => <PlanRij key={i} plan={p} />)}
                   </div>
                 </div>
               )}
               {overigePlannen.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                  <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--cds-text-secondary, #525252)", marginBottom: "0.5rem" }}>
                     Overige wijzigingen ({overigePlannen.length})
                   </p>
-                  <div className="space-y-1.5">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
                     {overigePlannen.map((p, i) => <PlanRij key={i} plan={p} />)}
                   </div>
                 </div>
@@ -111,15 +125,11 @@ function PlanRij({ plan }: { plan: PrecedentPlan }) {
   const typeLabel = TYPE_LABEL[plan.type] ?? plan.type;
 
   return (
-    <div className="rounded-md border px-3 py-2 text-xs bg-muted/30">
-      <p className="font-medium text-foreground leading-snug" title={plan.naam}>
-        {plan.naam}
-      </p>
-      <div className="flex items-center gap-2 mt-0.5 text-muted-foreground">
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-0 bg-blue-50 text-blue-700">
-          {typeLabel}
-        </Badge>
-        {datum && <span>{datum}</span>}
+    <div style={{ padding: "0.5rem 0.75rem", backgroundColor: "var(--cds-layer-02, #e0e0e0)", border: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
+      <p style={{ fontWeight: 500, fontSize: "0.8125rem", lineHeight: 1.4, color: "var(--cds-text-primary, #161616)" }}>{plan.naam}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem" }}>
+        <Tag type="blue" size="sm">{typeLabel}</Tag>
+        {datum && <span style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)" }}>{datum}</span>}
       </div>
     </div>
   );

@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Copy, Check, ClipboardList, Building2, Droplets, Leaf, Landmark } from "lucide-react";
+import { Tile, Tag } from "@carbon/react";
+import { Copy, Checkmark, Catalog, Building, UserMultiple, Sprout } from "@carbon/icons-react";
 import type { OpdrachtBrief } from "@/types";
+import type { CarbonIconType } from "@carbon/icons-react";
 
 type OntvangerType = OpdrachtBrief["ontvangerType"];
 
-const ONTVANGER_CONFIG: Record<
-  OntvangerType,
-  { label: string; badge: string; header: string; icon: React.ElementType; tekstKleur: string }
-> = {
-  gemeente:   { label: "Gemeente",         badge: "bg-orange-100 text-orange-700", header: "bg-orange-50 text-orange-800", icon: Landmark,  tekstKleur: "text-orange-600" },
-  adviseur:   { label: "Adviseur",         badge: "bg-green-100 text-green-700",   header: "bg-green-50 text-green-800",   icon: Leaf,      tekstKleur: "text-green-600" },
-  bureau:     { label: "Onderzoeksbureau", badge: "bg-blue-100 text-blue-700",     header: "bg-blue-50 text-blue-800",     icon: Building2, tekstKleur: "text-blue-600" },
-  waterschap: { label: "Waterschap",       badge: "bg-cyan-100 text-cyan-700",     header: "bg-cyan-50 text-cyan-800",     icon: Droplets,  tekstKleur: "text-cyan-600" },
+const ONTVANGER_CONFIG: Record<OntvangerType, {
+  label: string;
+  tagType: "warm-gray" | "green" | "blue" | "teal";
+  kleur: string;
+  achtergrond: string;
+  icon: CarbonIconType;
+}> = {
+  gemeente:   { label: "Gemeente",         tagType: "warm-gray", kleur: "#525252", achtergrond: "#f4f4f4", icon: Building },
+  adviseur:   { label: "Adviseur",         tagType: "green",  kleur: "#044317", achtergrond: "#defbe6", icon: Sprout },
+  bureau:     { label: "Onderzoeksbureau", tagType: "blue",   kleur: "#002d9c", achtergrond: "#edf5ff", icon: UserMultiple },
+  waterschap: { label: "Waterschap",       tagType: "teal",   kleur: "#004144", achtergrond: "#d9fbfb", icon: Building },
 };
 
 const GROEP_VOLGORDE: OntvangerType[] = ["gemeente", "adviseur", "bureau", "waterschap"];
@@ -36,9 +38,7 @@ export function OpdrachtBrieven({ brieven }: { brieven: OpdrachtBrief[] }) {
   const Icon = config.icon;
 
   const groepen = GROEP_VOLGORDE.flatMap((type) => {
-    const items = brieven
-      .map((b, i) => ({ b, i }))
-      .filter(({ b }) => b.ontvangerType === type);
+    const items = brieven.map((b, i) => ({ b, i })).filter(({ b }) => b.ontvangerType === type);
     return items.length ? [{ type, items }] : [];
   });
 
@@ -54,83 +54,96 @@ export function OpdrachtBrieven({ brieven }: { brieven: OpdrachtBrief[] }) {
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <ClipboardList className="h-4 w-4" />
+    <Tile style={{ padding: 0, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ padding: "1rem 1.25rem 0.75rem", borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 600, fontSize: "0.875rem" }}>
+          <Catalog size={16} />
           Brieven & verzoeken — klaar voor verzending
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
+        </div>
+        <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.25rem" }}>
           {brieven.length} brieven voor alle verplichte stappen — vul uw naam en contactgegevens in op de aangegeven plekken
         </p>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-0 border-t">
-        <div className="flex" style={{ minHeight: "480px", maxHeight: "640px" }}>
-
-          {/* ── Navigatiepanel ─────────────────────────────────────────── */}
-          <div className="w-52 shrink-0 border-r overflow-y-auto bg-muted/20">
-            {groepen.map(({ type, items }) => {
-              const cfg = ONTVANGER_CONFIG[type];
-              const Icn = cfg.icon;
-              return (
-                <div key={type}>
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide border-b ${cfg.header}`}>
-                    <Icn className={`h-3 w-3 ${cfg.tekstKleur}`} />
-                    {cfg.label}
-                  </div>
-                  {items.map(({ b, i }) => (
-                    <button
-                      key={i}
-                      onClick={() => selecteer(i)}
-                      className={`w-full text-left px-3 py-2.5 text-xs leading-snug border-b last:border-b-0 transition-colors hover:bg-accent ${
-                        i === geselecteerd
-                          ? "bg-accent font-semibold text-accent-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {kortNaam(b.onderzoekNaam)}
-                    </button>
-                  ))}
+      <div style={{ display: "flex", minHeight: "480px", maxHeight: "640px", borderTop: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
+        {/* Navigation panel */}
+        <div style={{ width: "13rem", flexShrink: 0, borderRight: "1px solid var(--cds-border-subtle-00, #e0e0e0)", overflowY: "auto", backgroundColor: "var(--cds-layer-02, #e0e0e0)" }}>
+          {groepen.map(({ type, items }) => {
+            const cfg = ONTVANGER_CONFIG[type];
+            const Icn = cfg.icon;
+            return (
+              <div key={type}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "0.375rem",
+                  padding: "0.375rem 0.75rem", fontSize: "0.6875rem", fontWeight: 600,
+                  textTransform: "uppercase", letterSpacing: "0.05em",
+                  backgroundColor: cfg.achtergrond, color: cfg.kleur,
+                  borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
+                }}>
+                  <Icn size={12} />
+                  {cfg.label}
                 </div>
-              );
-            })}
-          </div>
-
-          {/* ── Brief-inhoudspanel ──────────────────────────────────────── */}
-          <div className="flex-1 min-w-0 overflow-y-auto">
-            <div className="sticky top-0 z-10 bg-card border-b px-4 py-3 flex items-start justify-between gap-3">
-              <div className="space-y-1 min-w-0">
-                <Badge variant="outline" className={`border-0 text-xs inline-flex items-center gap-1 ${config.badge}`}>
-                  <Icon className="h-3 w-3" />
-                  {config.label}
-                </Badge>
-                <p className="text-xs text-muted-foreground leading-snug">
-                  <span className="font-medium text-foreground">Onderwerp:</span>{" "}
-                  {brief.onderwerp}
-                </p>
+                {items.map(({ b, i }) => (
+                  <button
+                    key={i}
+                    onClick={() => selecteer(i)}
+                    style={{
+                      width: "100%", textAlign: "left", padding: "0.625rem 0.75rem",
+                      fontSize: "0.75rem", lineHeight: 1.4,
+                      borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
+                      background: i === geselecteerd ? "var(--cds-layer-selected-01, #c6c6c6)" : "none",
+                      border: "none",
+                      borderLeft: i === geselecteerd ? `3px solid var(--cds-interactive, #0f62fe)` : "3px solid transparent",
+                      fontWeight: i === geselecteerd ? 600 : 400,
+                      color: i === geselecteerd ? "var(--cds-text-primary, #161616)" : "var(--cds-text-secondary, #525252)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {kortNaam(b.onderzoekNaam)}
+                  </button>
+                ))}
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs shrink-0"
-                onClick={kopieer}
-              >
-                {gekopieerd ? (
-                  <><Check className="h-3 w-3 mr-1" /> Gekopieerd</>
-                ) : (
-                  <><Copy className="h-3 w-3 mr-1" /> Kopieer</>
-                )}
-              </Button>
-            </div>
+            );
+          })}
+        </div>
 
-            <pre className="p-4 text-xs leading-relaxed whitespace-pre-wrap font-sans text-foreground">
-              {brief.inhoud}
-            </pre>
+        {/* Brief content */}
+        <div style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>
+          <div style={{
+            position: "sticky", top: 0, zIndex: 10,
+            backgroundColor: "var(--cds-layer-01, #f4f4f4)",
+            borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
+            padding: "0.75rem 1rem", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem",
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <Tag type={config.tagType} size="sm" style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                <Icon size={12} /> {config.label}
+              </Tag>
+              <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.25rem", lineHeight: 1.4 }}>
+                <strong style={{ color: "var(--cds-text-primary, #161616)" }}>Onderwerp:</strong>{" "}
+                {brief.onderwerp}
+              </p>
+            </div>
+            <button
+              onClick={kopieer}
+              style={{
+                display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0,
+                padding: "0.375rem 0.75rem", fontSize: "0.75rem",
+                border: "1px solid var(--cds-border-strong-01, #8d8d8d)",
+                backgroundColor: "var(--cds-layer-01, #f4f4f4)",
+                color: "var(--cds-text-primary, #161616)", cursor: "pointer",
+              }}
+            >
+              {gekopieerd ? <><Checkmark size={14} /> Gekopieerd</> : <><Copy size={14} /> Kopieer</>}
+            </button>
           </div>
 
+          <pre style={{ padding: "1rem", fontSize: "0.75rem", lineHeight: 1.6, whiteSpace: "pre-wrap", fontFamily: "inherit", color: "var(--cds-text-primary, #161616)" }}>
+            {brief.inhoud}
+          </pre>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Tile>
   );
 }

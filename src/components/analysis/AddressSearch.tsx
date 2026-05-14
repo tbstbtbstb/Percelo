@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { MapPin, Loader2 } from "lucide-react";
+import { TextInput, Loading } from "@carbon/react";
+import { Location } from "@carbon/icons-react";
 import { lookupLocatie, parseCentroide } from "@/lib/pdok";
 import type { Perceel } from "@/types";
 import type { PDOKSuggestie } from "@/lib/pdok";
@@ -77,37 +77,66 @@ export function AddressSearch({ onPerceelGeselecteerd, isLoading }: Props) {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full">
-      <div className="relative">
-        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Voer een adres of perceelnummer in..."
-          className="pl-9 pr-4 h-12 text-base"
-          disabled={isLoading}
-        />
-        {loadingSuggesties && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-        )}
-      </div>
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <TextInput
+        id="address-search"
+        labelText=""
+        hideLabel
+        placeholder="Voer een adres of perceelnummer in..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        disabled={isLoading}
+        size="lg"
+      />
+      {loadingSuggesties && (
+        <div style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)" }}>
+          <Loading small withOverlay={false} />
+        </div>
+      )}
 
       {open && suggesties.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg">
-          <ul className="py-1">
-            {suggesties.map((sug) => (
-              <li key={sug.id}>
-                <button
-                  onClick={() => selecteerSuggestie(sug)}
-                  className="w-full px-4 py-2.5 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2 transition-colors"
-                >
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span>{sug.weergavenaam}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul
+          style={{
+            position: "absolute",
+            zIndex: 9999,
+            top: "100%",
+            left: 0,
+            right: 0,
+            margin: 0,
+            padding: 0,
+            listStyle: "none",
+            backgroundColor: "var(--cds-layer-01, #f4f4f4)",
+            border: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          }}
+        >
+          {suggesties.map((sug) => (
+            <li key={sug.id}>
+              <button
+                onClick={() => selecteerSuggestie(sug)}
+                style={{
+                  width: "100%",
+                  padding: "0.75rem 1rem",
+                  textAlign: "left",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  fontSize: "0.875rem",
+                  color: "var(--cds-text-primary, #161616)",
+                  borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--cds-layer-hover-01, #e8e8e8)")}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              >
+                <Location size={16} style={{ flexShrink: 0, color: "var(--cds-text-secondary, #525252)" }} />
+                {sug.weergavenaam}
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

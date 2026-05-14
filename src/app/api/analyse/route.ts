@@ -52,6 +52,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(resultaat);
   } catch (err) {
     console.error("Analyse fout:", err);
+    const bericht = err instanceof Error ? err.message : "";
+    if (bericht.includes("429") || bericht.toLowerCase().includes("rate limit")) {
+      return NextResponse.json(
+        { error: "De AI-service heeft het dagelijkse token-limiet bereikt. Probeer het over een uur opnieuw." },
+        { status: 429 }
+      );
+    }
     return NextResponse.json({ error: "Analyse mislukt, probeer opnieuw" }, { status: 500 });
   }
 }

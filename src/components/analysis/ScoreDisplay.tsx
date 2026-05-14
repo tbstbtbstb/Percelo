@@ -1,28 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tag, ProgressBar, Tile } from "@carbon/react";
+import { CheckmarkFilled, MisuseOutline, WarningAltFilled } from "@carbon/icons-react";
 import type { ScoreKlasse, ScoreFactor, PrecedentPlan } from "@/types";
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { PrecedentenModal } from "./PrecedentenModal";
 
-const SCORE_CONFIG: Record<ScoreKlasse, { label: string; kleur: string; bg: string; ring: string }> = {
-  "ultra-hoog": { label: "Ultra Hoog", kleur: "text-emerald-700", bg: "bg-emerald-50", ring: "ring-emerald-500" },
-  hoog: { label: "Hoog", kleur: "text-green-700", bg: "bg-green-50", ring: "ring-green-400" },
-  gemiddeld: { label: "Gemiddeld", kleur: "text-yellow-700", bg: "bg-yellow-50", ring: "ring-yellow-400" },
-  laag: { label: "Laag", kleur: "text-orange-700", bg: "bg-orange-50", ring: "ring-orange-400" },
-  "ultra-laag": { label: "Ultra Laag", kleur: "text-red-700", bg: "bg-red-50", ring: "ring-red-500" },
+const SCORE_CONFIG: Record<ScoreKlasse, {
+  label: string;
+  tagType: "green" | "teal" | "warm-gray" | "red";
+  kleur: string;
+  achtergrond: string;
+}> = {
+  "ultra-hoog": { label: "Ultra Hoog",  tagType: "green",     kleur: "#24a148", achtergrond: "#defbe6" },
+  "hoog":       { label: "Hoog",        tagType: "teal",      kleur: "#007d79", achtergrond: "#d9fbfb" },
+  "gemiddeld":  { label: "Gemiddeld",   tagType: "warm-gray", kleur: "#b28600", achtergrond: "#fdf6dd" },
+  "laag":       { label: "Laag",        tagType: "warm-gray", kleur: "#b45309", achtergrond: "#fff3e0" },
+  "ultra-laag": { label: "Ultra Laag",  tagType: "red",       kleur: "#da1e28", achtergrond: "#fff1f1" },
 };
 
-const PROGRESS_KLEUR: Record<ScoreKlasse, string> = {
-  "ultra-hoog": "[&>div]:bg-emerald-500",
-  hoog: "[&>div]:bg-green-500",
-  gemiddeld: "[&>div]:bg-yellow-500",
-  laag: "[&>div]:bg-orange-500",
-  "ultra-laag": "[&>div]:bg-red-500",
-};
+function factorKleur(score: number) {
+  if (score >= 70) return "#24a148";
+  if (score >= 40) return "#b28600";
+  return "#da1e28";
+}
 
 interface Props {
   score: number;
@@ -37,67 +38,78 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       {/* Hoofdscore */}
-      <div className={`rounded-xl p-6 ${cfg.bg} ring-2 ${cfg.ring}`}>
-        <div className="flex items-center justify-between mb-3">
+      <Tile style={{ backgroundColor: cfg.achtergrond, padding: "1.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "1rem" }}>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Slagingskans</p>
-            <p className={`text-4xl font-bold mt-1 ${cfg.kleur}`}>{score}/100</p>
+            <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginBottom: "0.25rem", fontWeight: 400 }}>
+              Slagingskans
+            </p>
+            <p style={{ fontSize: "3rem", fontWeight: 700, color: cfg.kleur, lineHeight: 1, fontFamily: "var(--cds-code-01-font-family, monospace)" }}>
+              {score}<span style={{ fontSize: "1.25rem" }}>/100</span>
+            </p>
           </div>
-          <Badge variant="outline" className={`text-lg px-4 py-2 ${cfg.kleur} border-current font-semibold`}>
+          <Tag type={cfg.tagType} size="lg" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}>
             {cfg.label}
-          </Badge>
+          </Tag>
         </div>
-        <Progress value={score} className={`h-3 ${PROGRESS_KLEUR[scoreKlasse]}`} />
-      </div>
+        <div style={{ "--cds-interactive": cfg.kleur } as React.CSSProperties}>
+          <ProgressBar
+            value={score}
+            max={100}
+            label=""
+            hideLabel
+            size="small"
+            status="active"
+          />
+        </div>
+      </Tile>
 
-      {/* Factoren */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Scorefactoren</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      {/* Scorefactoren */}
+      <Tile style={{ padding: "1.25rem" }}>
+        <h3 style={{ fontSize: "0.875rem", fontWeight: 600, marginBottom: "1rem", color: "var(--cds-text-primary, #161616)" }}>
+          Scorefactoren
+        </h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {factoren.map((factor) => (
-            <div key={factor.naam} className="space-y-1.5">
-              <div className="flex items-start gap-2">
-                {factor.positief ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                ) : factor.score >= 40 ? (
-                  <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{factor.naam}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">{factor.score}/100</span>
+            <div key={factor.naam}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
+                <span style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+                  {factor.positief
+                    ? <CheckmarkFilled size={16} style={{ color: "#24a148" }} />
+                    : factor.score >= 40
+                    ? <WarningAltFilled size={16} style={{ color: "#b28600" }} />
+                    : <MisuseOutline size={16} style={{ color: "#da1e28" }} />
+                  }
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{factor.naam}</span>
+                    <span style={{ fontSize: "0.75rem", flexShrink: 0, fontWeight: 600, color: factorKleur(factor.score) }}>
+                      {factor.score}/100
+                    </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{factor.toelichting}</p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.25rem", lineHeight: 1.4 }}>
+                    {factor.toelichting}
+                  </p>
                   {factor.naam === "Historische precedenten" && precedentPlannen.length > 0 && (
                     <button
                       onClick={() => setModalOpen(true)}
-                      className="text-xs text-blue-600 hover:underline mt-1"
+                      style={{ fontSize: "0.75rem", color: "var(--cds-link-primary, #0f62fe)", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: "0.25rem", textDecoration: "underline" }}
                     >
                       Bekijk {precedentPlannen.length} vastgestelde plan{precedentPlannen.length !== 1 ? "nen" : ""} →
                     </button>
                   )}
-                  <Progress
-                    value={factor.score}
-                    className={`h-1.5 mt-1.5 ${
-                      factor.score >= 70
-                        ? "[&>div]:bg-green-400"
-                        : factor.score >= 40
-                        ? "[&>div]:bg-yellow-400"
-                        : "[&>div]:bg-red-400"
-                    }`}
-                  />
+                  <div style={{ marginTop: "0.375rem", height: "3px", backgroundColor: "var(--cds-layer-02, #e0e0e0)", borderRadius: "2px", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${factor.score}%`, backgroundColor: factorKleur(factor.score), borderRadius: "2px", transition: "width 0.3s ease" }} />
+                  </div>
                 </div>
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </Tile>
 
       <PrecedentenModal
         open={modalOpen}
