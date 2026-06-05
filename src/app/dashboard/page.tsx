@@ -1,152 +1,176 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, TrendingUp, Clock } from "lucide-react";
+import { Button, Tile, Tag, InlineLoading } from "@carbon/react";
+import { Add, Location, Time, TrashCan, Growth } from "@carbon/icons-react";
+import type { AnalyseSamenvatting } from "@/app/api/analyses/route";
 
-const MOCK_ANALYSES = [
-  {
-    id: "a1b2c3d4",
-    adres: "Koekoekslaan 12, Almere",
-    gemeente: "Almere",
-    scoreKlasse: "hoog" as const,
-    score: 72,
-    datum: "2026-05-10",
-  },
-  {
-    id: "e5f6g7h8",
-    adres: "Langeweg 45, Breda",
-    gemeente: "Breda",
-    scoreKlasse: "gemiddeld" as const,
-    score: 54,
-    datum: "2026-05-08",
-  },
-  {
-    id: "i9j0k1l2",
-    adres: "Molenkade 3, Gouda",
-    gemeente: "Gouda",
-    scoreKlasse: "laag" as const,
-    score: 31,
-    datum: "2026-05-05",
-  },
-];
-
-const KLEUR: Record<string, string> = {
-  "ultra-hoog": "bg-emerald-100 text-emerald-700",
-  hoog: "bg-green-100 text-green-700",
-  gemiddeld: "bg-yellow-100 text-yellow-700",
-  laag: "bg-orange-100 text-orange-700",
-  "ultra-laag": "bg-red-100 text-red-700",
-};
-
-const LABEL: Record<string, string> = {
-  "ultra-hoog": "Ultra Hoog",
-  hoog: "Hoog",
-  gemiddeld: "Gemiddeld",
-  laag: "Laag",
-  "ultra-laag": "Ultra Laag",
+const SCORE_TAG: Record<string, { type: "green" | "teal" | "warm-gray" | "red"; label: string }> = {
+  "ultra-hoog": { type: "green",     label: "Ultra Hoog" },
+  "hoog":       { type: "teal",      label: "Hoog" },
+  "gemiddeld":  { type: "warm-gray", label: "Gemiddeld" },
+  "laag":       { type: "warm-gray", label: "Laag" },
+  "ultra-laag": { type: "red",       label: "Ultra Laag" },
 };
 
 export default function DashboardPage() {
+  const { isSignedIn, user, isLoaded } = useUser();
+  const [analyses, setAnalyses] = useState<AnalyseSamenvatting[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    fetch("/api/analyses")
+      .then((r) => r.json())
+      .then((data) => setAnalyses(Array.isArray(data) ? data : []))
+      .finally(() => setLoading(false));
+  }, [isSignedIn]);
+
+  async function verwijder(analyseId: string) {
+    setAnalyses((prev) => prev.filter((a) => a.analyseId !== analyseId));
+    await fetch("/api/analyses", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analyseId }),
+    });
+  }
+
+  if (!isLoaded) return null;
+
+  if (!isSignedIn) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#ffffff" }}>
+        <Tile style={{ padding: "2rem", textAlign: "center", maxWidth: "24rem" }}>
+          <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Inloggen vereist</p>
+          <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary)", marginBottom: "1rem" }}>
+            Log in om uw opgeslagen analyses te bekijken.
+          </p>
+          <Link href="/login">
+            <Button>Inloggen</Button>
+          </Link>
+        </Tile>
+      </div>
+    );
+  }
+
+  const gemScore = analyses.length
+    ? Math.round(analyses.reduce((s, a) => s + a.totaalScore, 0) / analyses.length)
+    : null;
+  const hoogAantal = analyses.filter((a) => a.scoreKlasse === "hoog" || a.scoreKlasse === "ultra-hoog").length;
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Mijn Percelen</h1>
-          <p className="text-muted-foreground text-sm mt-1">Overzicht van uw analyses</p>
+    <div style={{ minHeight: "100vh", backgroundColor: "#ffffff" }}>
+      {/* Hero */}
+      <div style={{ borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)", backgroundColor: "var(--cds-layer-01, #f4f4f4)" }}>
+        <div style={{ maxWidth: "52rem", margin: "0 auto", padding: "2rem 1rem", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+          <div>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 600 }}>Mijn percelen</h1>
+            <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary)", marginTop: "0.25rem" }}>
+              Welkom, {user.firstName ?? user.emailAddresses[0]?.emailAddress}
+            </p>
+          </div>
+          <Link href="/analyse">
+            <Button renderIcon={Add} size="md">Nieuwe analyse</Button>
+          </Link>
         </div>
-        <Link href="/analyse">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nieuwe analyse
-          </Button>
-        </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Analyses deze maand</p>
-            <p className="text-2xl font-bold mt-1">3</p>
-            <p className="text-xs text-muted-foreground">van 30 (Pro)</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Gemiddelde score</p>
-            <p className="text-2xl font-bold mt-1">52</p>
-            <p className="text-xs text-muted-foreground text-yellow-600">Gemiddeld</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Hoge kans percelen</p>
-            <p className="text-2xl font-bold mt-1">1</p>
-            <p className="text-xs text-muted-foreground text-green-600">Actie aanbevolen</p>
-          </CardContent>
-        </Card>
-      </div>
+      <div style={{ maxWidth: "52rem", margin: "0 auto", padding: "2rem 1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
-      {/* Lijst */}
-      <div className="space-y-3">
-        {MOCK_ANALYSES.map((analyse) => (
-          <Card key={analyse.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-sm truncate">{analyse.adres}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(analyse.datum).toLocaleDateString("nl-NL")}
-                      </span>
+        {/* Stats */}
+        <div className="percelo-stats-grid">
+          {[
+            { label: "Opgeslagen analyses", waarde: analyses.length, sub: "totaal" },
+            { label: "Gemiddelde score", waarde: gemScore ?? "—", sub: gemScore ? (gemScore >= 65 ? "Hoog" : gemScore >= 45 ? "Gemiddeld" : "Laag") : "nog geen analyses" },
+            { label: "Hoge kans percelen", waarde: hoogAantal, sub: hoogAantal > 0 ? "Actie aanbevolen" : "geen" },
+          ].map(({ label, waarde, sub }) => (
+            <Tile key={label} style={{ padding: "1rem" }}>
+              <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary)" }}>{label}</p>
+              <p style={{ fontSize: "1.75rem", fontWeight: 700, marginTop: "0.25rem", lineHeight: 1 }}>{waarde}</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary)", marginTop: "0.25rem" }}>{sub}</p>
+            </Tile>
+          ))}
+        </div>
+
+        {/* Lijst */}
+        {loading ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}>
+            <InlineLoading description="Analyses laden..." status="active" />
+          </div>
+        ) : analyses.length === 0 ? (
+          <Tile style={{ padding: "3rem", textAlign: "center" }}>
+            <Location size={32} style={{ color: "var(--cds-text-secondary)", margin: "0 auto 1rem" }} />
+            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Nog geen analyses opgeslagen</p>
+            <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary)", marginBottom: "1.5rem" }}>
+              Analyseer een perceel om het hier te bewaren.
+            </p>
+            <Link href="/analyse">
+              <Button renderIcon={Add}>Start eerste analyse</Button>
+            </Link>
+          </Tile>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {analyses.map((a) => {
+              const tag = SCORE_TAG[a.scoreKlasse] ?? SCORE_TAG.gemiddeld;
+              return (
+                <Tile key={a.analyseId} style={{ padding: "1rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem", minWidth: 0 }}>
+                      <div style={{ width: "2.25rem", height: "2.25rem", flexShrink: 0, backgroundColor: "var(--cds-layer-02, #e0e0e0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Location size={16} style={{ color: "var(--cds-text-secondary)" }} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontWeight: 600, fontSize: "0.875rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.adres}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", marginTop: "0.25rem", fontSize: "0.75rem", color: "var(--cds-text-secondary)" }}>
+                          <Time size={12} />
+                          {new Date(a.gegenereedOp).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+                      <div style={{ textAlign: "right" }}>
+                        <p style={{ fontSize: "1.25rem", fontWeight: 700, lineHeight: 1 }}>{a.totaalScore}</p>
+                        <p style={{ fontSize: "0.6875rem", color: "var(--cds-text-secondary)" }}>score</p>
+                      </div>
+                      <Tag type={tag.type} size="sm">{tag.label}</Tag>
+                      <Link href={`/analyse?id=${a.analyseId}`}>
+                        <Button kind="ghost" size="sm">Bekijk</Button>
+                      </Link>
+                      <button
+                        onClick={() => verwijder(a.analyseId)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--cds-text-secondary)", padding: "0.25rem" }}
+                        aria-label="Verwijder"
+                      >
+                        <TrashCan size={16} />
+                      </button>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <p className="font-bold text-lg">{analyse.score}</p>
-                    <p className="text-xs text-muted-foreground">score</p>
-                  </div>
-                  <Badge className={`${KLEUR[analyse.scoreKlasse]} border-0 text-xs`}>
-                    {LABEL[analyse.scoreKlasse]}
-                  </Badge>
-                  <Link href="/analyse">
-                    <Button variant="ghost" size="sm" className="text-xs h-8">
-                      Bekijk
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Upgrade teaser */}
-      <Card className="mt-8 bg-primary/5 border-primary/20">
-        <CardContent className="py-5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <div>
-              <p className="font-semibold text-sm">Portefeuillebeheer & Monitoring</p>
-              <p className="text-xs text-muted-foreground">
-                Ontvang alerts bij bestemmingsplanwijzigingen in uw interessegebied — beschikbaar in Business
-              </p>
-            </div>
+                </Tile>
+              );
+            })}
           </div>
-          <Link href="/pricing">
-            <Button size="sm" variant="outline" className="shrink-0 text-xs">
-              Upgrade
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Upgrade teaser */}
+        <Tile style={{ padding: "1.25rem", backgroundColor: "#edf5ff", borderLeft: "4px solid #0f62fe" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <Growth size={20} style={{ color: "#0f62fe", flexShrink: 0 }} />
+              <div>
+                <p style={{ fontWeight: 600, fontSize: "0.875rem" }}>Portefeuillebeheer & Monitoring</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary)" }}>
+                  Ontvang alerts bij bestemmingsplanwijzigingen in uw interessegebied — beschikbaar in Business
+                </p>
+              </div>
+            </div>
+            <Link href="/pricing">
+              <Button kind="secondary" size="sm">Upgrade</Button>
+            </Link>
+          </div>
+        </Tile>
+      </div>
     </div>
   );
 }

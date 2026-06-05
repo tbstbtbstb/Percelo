@@ -1,0 +1,26 @@
+<svg width="160" height="44" viewBox="0 0 160 44" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Percelo">
+  <title>Percelo</title>
+
+  <!-- ── Parcel mark (dark variant) ── -->
+  <polygon points="8,4 41,6 39,40 5,38"
+    fill="#1a3a5c" stroke="#78a9ff" stroke-width="2.5"
+    stroke-linejoin="round" stroke-linecap="round"/>
+
+  <line x1="6.5" y1="16" x2="40" y2="17.5"
+    stroke="#78a9ff" stroke-width="1.2" stroke-opacity="0.4"/>
+
+  <line x1="24" y1="17.5" x2="23" y2="40"
+    stroke="#78a9ff" stroke-width="1.2" stroke-opacity="0.3"/>
+
+  <!-- Location pin -->
+  <circle cx="31" cy="11" r="6" fill="#78a9ff"/>
+  <circle cx="31" cy="11" r="2.6" fill="#161616"/>
+  <circle cx="31" cy="11" r="9" stroke="#78a9ff" stroke-width="1"
+    stroke-opacity="0.28" fill="none"/>
+
+  <!-- ── Wordmark (white) ── -->
+  <text x="51" y="30"
+    font-family="'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="22" font-weight="600" letter-spacing="-0.5"
+    fill="#ffffff">Percelo</text>
+</svg>

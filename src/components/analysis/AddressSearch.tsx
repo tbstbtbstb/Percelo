@@ -10,17 +10,29 @@ import type { PDOKSuggestie } from "@/lib/pdok";
 interface Props {
   onPerceelGeselecteerd: (perceel: Perceel) => void;
   isLoading: boolean;
+  externalValue?: string;
 }
 
-export function AddressSearch({ onPerceelGeselecteerd, isLoading }: Props) {
+export function AddressSearch({ onPerceelGeselecteerd, isLoading, externalValue }: Props) {
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (externalValue !== undefined) {
+      setQuery(externalValue);
+    }
+  }, [externalValue]);
   const [suggesties, setSuggesties] = useState<PDOKSuggestie[]>([]);
   const [loadingSuggesties, setLoadingSuggesties] = useState(false);
   const [open, setOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const skipNextFetchRef = useRef(false);
 
   useEffect(() => {
+    if (skipNextFetchRef.current) {
+      skipNextFetchRef.current = false;
+      return;
+    }
     if (query.length < 3) {
       setSuggesties([]);
       setOpen(false);
@@ -51,6 +63,7 @@ export function AddressSearch({ onPerceelGeselecteerd, isLoading }: Props) {
   }, []);
 
   async function selecteerSuggestie(sug: PDOKSuggestie) {
+    skipNextFetchRef.current = true;
     setQuery(sug.weergavenaam);
     setOpen(false);
 
@@ -71,13 +84,15 @@ export function AddressSearch({ onPerceelGeselecteerd, isLoading }: Props) {
       bagId: locatie.id,
       adresseerbaarobjectId: locatie.adresseerbaarobject_id,
       gekoppeldPerceel: locatie.gekoppeld_perceel,
+      // Bij perceel-type resultaten geeft de locatieserver de oppervlakte direct mee
+      perceelOppervlakte: locatie.kadastrale_grootte ?? undefined,
     };
 
     onPerceelGeselecteerd(perceel);
   }
 
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
+    <div ref={containerRef} style={{ position: "relative", "--cds-layer-01": "#ffffff", "--cds-layer": "#ffffff" } as React.CSSProperties}>
       <TextInput
         id="address-search"
         labelText=""

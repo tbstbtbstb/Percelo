@@ -346,7 +346,7 @@ export function AnalysePDF({ data }: { data: AnalyseResultaat }) {
   return (
     <Document
       title={`Bestemmingswijziging analyse — ${data.perceel.adres}`}
-      author="BestemmingsWijziging.nl"
+      author="Percelo"
       subject="Analyse slagingskans bestemmingswijziging"
     >
       {/* ══ PAGINA 1: Score + Factoren ══════════════════════════════════════ */}
@@ -473,7 +473,7 @@ export function AnalysePDF({ data }: { data: AnalyseResultaat }) {
           {/* Disclaimer */}
           <View style={s.disclaimerBlok}>
             <Text style={s.disclaimerTekst}>
-              Dit rapport is gegenereerd door BestemmingsWijziging.nl op basis van openbare ruimtelijke data (PDOK, Ruimtelijkeplannen.nl) en een AI-analyse.
+              Dit rapport is gegenereerd door Percelo op basis van openbare ruimtelijke data (PDOK, Ruimtelijkeplannen.nl) en een AI-analyse.
               De score en berekeningen zijn indicatief en vormen geen juridisch advies. Raadpleeg altijd een gecertificeerd RO-adviseur voor formele besluitvorming.
               Analyse-ID: {data.analyseId} · {datum}
             </Text>
@@ -489,7 +489,7 @@ export function AnalysePDF({ data }: { data: AnalyseResultaat }) {
 function PageFooter({ pagina, datum, analyseId }: { pagina: number; datum: string; analyseId: string }) {
   return (
     <View style={s.footer} fixed>
-      <Text style={s.footerTekst}>BestemmingsWijziging.nl · {datum}</Text>
+      <Text style={s.footerTekst}>Percelo · {datum}</Text>
       <Text style={s.footerTekst}>ID {analyseId.slice(0, 8)} · Pagina {pagina}</Text>
     </View>
   );

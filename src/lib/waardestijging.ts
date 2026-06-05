@@ -58,7 +58,7 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 }
 
 async function fetchBRKOppervlakte(perceelId: string | undefined, lat: number, lon: number): Promise<number | null> {
-  // Stap 1: directe lookup via perceel-ID vanuit de locatieserver (meest betrouwbaar)
+  // Stap 1: locatieserver /free op perceel-ID — retourneert kadastrale_grootte direct en betrouwbaar
   if (perceelId) {
     try {
       const url =
@@ -70,17 +70,16 @@ async function fetchBRKOppervlakte(perceelId: string | undefined, lat: number, l
         const grootte: number | undefined = data.response?.docs?.[0]?.kadastrale_grootte;
         if (grootte && grootte > 0) return grootte;
       }
-    } catch {
-      // val terug op coördinatenopzoeking
-    }
+    } catch { /* val terug */ }
   }
 
-  // Stap 2: coördinaat-gebaseerde fallback via kadastralekaart WFS
+  // Stap 2: coördinaat-gebaseerde fallback via kadastrale kaart WFS
+  // Risico: bij dichtbevolkte gebieden kan een aangrenzend kleiner perceel worden geraakt.
   try {
     const url =
       `https://service.pdok.nl/kadaster/kadastralekaart/wfs/v5_0?service=WFS&version=2.0.0` +
       `&request=GetFeature&typeName=kadastralekaart:perceel&outputFormat=json&count=1` +
-      `&CQL_FILTER=INTERSECTS(geometrie,POINT(${lon}%20${lat}))&srsName=EPSG:4326`;
+      `&CQL_FILTER=${encodeURIComponent(`INTERSECTS(geometrie,POINT(${lon} ${lat}))`)}&srsName=EPSG:4326`;
     const res = await fetch(url, { signal: AbortSignal.timeout(7000) });
     if (!res.ok) return null;
     const data = await res.json();
@@ -120,6 +119,28 @@ async function fetchBodemtype(lat: number, lon: number): Promise<{ naam: string;
   }
 }
 
+async function fetchWozWaarde(
+  adresseerbaarobjectId: string | undefined
+): Promise<{ waarde: number; peildatum: string } | null> {
+  if (!adresseerbaarobjectId) return null;
+  try {
+    const url = `https://api.wozwaardeloket.nl/woz-waarden/${adresseerbaarobjectId}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data: { peildatum: string; vastgesteldeWaarde: number; statusCode: string }[] = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return null;
+    // Meest recente definitieve waarde
+    const definitief = data
+      .filter((d) => d.statusCode === "definitief" && d.vastgesteldeWaarde > 0)
+      .sort((a, b) => b.peildatum.localeCompare(a.peildatum));
+    const beste = definitief[0] ?? data.sort((a, b) => b.peildatum.localeCompare(a.peildatum))[0];
+    if (!beste?.vastgesteldeWaarde) return null;
+    return { waarde: beste.vastgesteldeWaarde, peildatum: beste.peildatum.slice(0, 4) };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchAfstandTotKern(
   lat: number,
   lon: number
@@ -154,12 +175,13 @@ export async function berekenWaardestijging(
   const base = BOUWGROND_PER_M2[regio];
   const agrarischPrijsPerHa = AGRARISCH_PRIJS_PER_HA[provincie] ?? 95400;
 
-  const [brkOpp, bodem, kern] = await Promise.all([
+  const [brkOpp, bodem, kern, woz] = await Promise.all([
     perceel.perceelOppervlakte
       ? Promise.resolve(perceel.perceelOppervlakte)
       : fetchBRKOppervlakte(perceel.gekoppeldPerceel?.[0], perceel.lat, perceel.lon),
     fetchBodemtype(perceel.lat, perceel.lon),
     fetchAfstandTotKern(perceel.lat, perceel.lon),
+    fetchWozWaarde(perceel.adresseerbaarobjectId),
   ]);
 
   const perceelM2 = brkOpp ?? 2500;
@@ -222,5 +244,7 @@ export async function berekenWaardestijging(
     afstandTotKernKm: kern.km,
     afstandTotKernNaam: kern.naam,
     aanpassingsPct,
+    wozWaarde: woz?.waarde,
+    wozPeildatum: woz?.peildatum,
   };
 }

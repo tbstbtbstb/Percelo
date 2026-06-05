@@ -72,6 +72,57 @@ const HOGE_ANTERIEUR_PROVINCIES = new Set([
   "Noord-Holland", "Utrecht", "Gelderland", "Noord-Brabant", "Overijssel",
 ]);
 
+// ─── Perceelgrootte scaling ───────────────────────────────────────────────────
+
+type SizeKlasse = "klein" | "midden" | "groot";
+
+function getSizeKlasse(m2: number): SizeKlasse {
+  if (m2 < 2000)  return "klein";
+  if (m2 <= 10000) return "midden";
+  return "groot";
+}
+
+// Marktprijzen 2024–2025, gebaseerd op RO-branche benchmarks en SIKB-tarieven
+const TARIEVEN: Record<string, Record<SizeKlasse, { min: number; max: number; tijd: string }>> = {
+  bodem: {
+    klein:  { min: 900,  max: 1800, tijd: "1–2 weken" },
+    midden: { min: 1800, max: 3200, tijd: "2–4 weken" },
+    groot:  { min: 3200, max: 7000, tijd: "3–6 weken" },
+  },
+  akoestisch: {
+    klein:  { min: 1200, max: 2000, tijd: "1–2 weken" },
+    midden: { min: 1500, max: 2500, tijd: "2–3 weken" },
+    groot:  { min: 2200, max: 4000, tijd: "2–4 weken" },
+  },
+  ecologie: {
+    klein:  { min: 600,  max: 1100, tijd: "1–2 weken" },
+    midden: { min: 900,  max: 1600, tijd: "2–4 weken" },
+    groot:  { min: 1600, max: 3200, tijd: "3–6 weken" },
+  },
+  water: {
+    klein:  { min: 400,  max: 1000, tijd: "2–4 weken" },
+    midden: { min: 600,  max: 1500, tijd: "4–8 weken" },
+    groot:  { min: 1000, max: 2500, tijd: "4–10 weken" },
+  },
+  landschap: {
+    klein:  { min: 1500, max: 3000, tijd: "2–3 weken" },
+    midden: { min: 2000, max: 5000, tijd: "2–4 weken" },
+    groot:  { min: 4000, max: 9000, tijd: "3–6 weken" },
+  },
+  archeologie: {
+    klein:  { min: 800,  max: 2000, tijd: "2–4 weken" },
+    midden: { min: 1500, max: 4000, tijd: "3–6 weken" },
+    groot:  { min: 3500, max: 9000, tijd: "6–12 weken" },
+  },
+  adviseur: {
+    klein:  { min: 3500, max: 9000,  tijd: "" },
+    midden: { min: 4500, max: 13000, tijd: "" },
+    groot:  { min: 7000, max: 22000, tijd: "" },
+  },
+};
+
+// ─── Locatieklasse ────────────────────────────────────────────────────────────
+
 function getLocatieKlasse(perceel: Perceel) {
   const gemeente = perceel.gemeente ?? "";
   const provincie = perceel.provincie ?? "";
@@ -95,12 +146,7 @@ function getLocatieKlasse(perceel: Perceel) {
     : isRandstad
     ? { min: 3500, max: 15000 }
     : { min: 2000, max: 10000 };
-  const adviseur = isRandstad
-    ? { min: 8000, max: 20000 }
-    : isGroteSted
-    ? { min: 6000, max: 16000 }
-    : { min: 4500, max: 12000 };
-  return { gemeente, provincie, isGroteSted, isRandstad, isHogeAnterieur, leges, legesBron, anterieur, planschade, adviseur };
+  return { gemeente, provincie, isGroteSted, isRandstad, isHogeAnterieur, leges, legesBron, anterieur, planschade };
 }
 
 // ─── Onderzoeken + procedures + documenten ───────────────────────────────────
@@ -113,6 +159,8 @@ export function bepaalOnderzoeken(
   const kritiekNatura2000 = natura2000Score < 40;
   const { gemeente, provincie, isGroteSted, isHogeAnterieur, leges, legesBron, anterieur, planschade } =
     getLocatieKlasse(perceel);
+  const size = getSizeKlasse(perceel.perceelOppervlakte ?? 2500);
+  const T = TARIEVEN;
 
   const onderzoeken: OnderzoekItem[] = [
     // ── Procedures ───────────────────────────────────────────────────────────
@@ -138,9 +186,9 @@ export function bepaalOnderzoeken(
       verplicht: true,
       toelichting:
         "Agrarische grond heeft verhoogd risico op verontreiniging door jarenlang gebruik van meststoffen en bestrijdingsmiddelen. Gemeente vereist een verkennend bodemonderzoek voor elke bestemmingswijziging.",
-      kostenMin: 1500,
-      kostenMax: 3000,
-      doorlooptijd: "2–4 weken",
+      kostenMin: T.bodem[size].min,
+      kostenMax: T.bodem[size].max,
+      doorlooptijd: T.bodem[size].tijd,
       risico: "gemiddeld",
       trigger: "Altijd verplicht bij bestemmingswijziging naar wonen",
     },
@@ -150,9 +198,9 @@ export function bepaalOnderzoeken(
       verplicht: true,
       toelichting:
         "Toetst of de geluidsbelasting van wegen, spoor en industrie op de nieuwe woonfunctie binnen de wettelijke normen valt. Vereist bij elke aanvraag voor woonbestemming.",
-      kostenMin: 1500,
-      kostenMax: 2500,
-      doorlooptijd: "2–3 weken",
+      kostenMin: T.akoestisch[size].min,
+      kostenMax: T.akoestisch[size].max,
+      doorlooptijd: T.akoestisch[size].tijd,
       risico: "gemiddeld",
       trigger: "Verplicht bij nieuwe woonfunctie nabij wegen of spoor",
     },
@@ -162,9 +210,9 @@ export function bepaalOnderzoeken(
       verplicht: true,
       toelichting:
         "Inventariseert beschermde flora en fauna op en rondom het perceel. Bij aanwezigheid van beschermde soorten (vleermuizen, vogels, amfibieën) volgt een nader onderzoek dat maanden extra kost.",
-      kostenMin: 800,
-      kostenMax: 1500,
-      doorlooptijd: "2–4 weken (seizoensgebonden)",
+      kostenMin: T.ecologie[size].min,
+      kostenMax: T.ecologie[size].max,
+      doorlooptijd: `${T.ecologie[size].tijd} (seizoensgebonden)`,
       risico: "gemiddeld",
       trigger: "Verplicht bij ruimtelijke ingrepen — beschermde soorten zijn een veelvoorkomend obstakel",
     },
@@ -174,9 +222,9 @@ export function bepaalOnderzoeken(
       verplicht: true,
       toelichting:
         "Het waterschap beoordeelt gevolgen voor waterafvoer, grondwaterpeil en overstromingsrisico. Nieuwbouw in het buitengebied vereist altijd een positief wateradvies.",
-      kostenMin: 500,
-      kostenMax: 1500,
-      doorlooptijd: "4–8 weken (advies waterschap)",
+      kostenMin: T.water[size].min,
+      kostenMax: T.water[size].max,
+      doorlooptijd: T.water[size].tijd + " (advies waterschap)",
       risico: "laag",
       trigger: "Verplicht bij elke ruimtelijke ontwikkeling",
     },
@@ -186,9 +234,9 @@ export function bepaalOnderzoeken(
       verplicht: true,
       toelichting:
         "Toont aan hoe het nieuwe bouwperceel visueel past in het buitengebied. Vrijwel alle gemeenten eisen dit als onderdeel van de ruimtelijke onderbouwing. Omvat beplantingsplan en erfinrichting.",
-      kostenMin: 2000,
-      kostenMax: 5000,
-      doorlooptijd: "2–4 weken",
+      kostenMin: T.landschap[size].min,
+      kostenMax: T.landschap[size].max,
+      doorlooptijd: T.landschap[size].tijd,
       risico: "laag",
       trigger: "Standaard vereiste bij buitengebied-ontwikkeling",
     },
@@ -198,9 +246,9 @@ export function bepaalOnderzoeken(
       verplicht: false,
       toelichting:
         "Vereist als het perceel in een zone met middelhoge of hoge archeologische verwachting ligt (zie gemeentelijke archeologische beleidskaart). Bij positieve vondsten volgt een opgraving die het project aanzienlijk vertraagt.",
-      kostenMin: 1000,
-      kostenMax: 4000,
-      doorlooptijd: "3–6 weken",
+      kostenMin: T.archeologie[size].min,
+      kostenMax: T.archeologie[size].max,
+      doorlooptijd: T.archeologie[size].tijd,
       risico: "gemiddeld",
       trigger: "Controleer de gemeentelijke archeologiekaart — vereist bij verwachtingswaarde 'middelhoog' of hoger",
     },
@@ -328,8 +376,14 @@ export function berekenKosten(
   perceel: Perceel,
   onderzoeken: OnderzoekItem[]
 ): KostenRaming {
-  const { gemeente, provincie, isGroteSted, isRandstad, isHogeAnterieur, leges, legesBron, anterieur, planschade, adviseur } =
+  const { gemeente, provincie, isGroteSted, isRandstad, isHogeAnterieur, leges, legesBron, anterieur, planschade } =
     getLocatieKlasse(perceel);
+  const size = getSizeKlasse(perceel.perceelOppervlakte ?? 2500);
+  const locFactor = isRandstad ? 1.5 : isGroteSted ? 1.25 : 1.0;
+  const adviseur = {
+    min: Math.round(TARIEVEN.adviseur[size].min * locFactor),
+    max: Math.round(TARIEVEN.adviseur[size].max * locFactor),
+  };
 
   // Alleen de technische onderzoeken (niet leges/doc/procedure — die staan al als aparte posten)
   const verplichtOnderzoeken = onderzoeken.filter(

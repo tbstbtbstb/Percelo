@@ -1,7 +1,8 @@
 "use client";
 
-import { Tile, Tag } from "@carbon/react";
-import { Growth, Information } from "@carbon/icons-react";
+import { useState } from "react";
+import { Tile, Tag, TextInput } from "@carbon/react";
+import { Growth, Information, Edit } from "@carbon/icons-react";
 import type { WaardestijgingData } from "@/types";
 
 function eur(bedrag: number) {
@@ -27,14 +28,26 @@ function Balk({ label, bedragMin, bedragMax, kleur, max }: {
 
 export function WaardestijgingCalculator({ data }: { data: WaardestijgingData }) {
   const kavelM2 = data.perceelM2 ?? 2500;
-  const agrarischWaarde = Math.round((kavelM2 / 10000) * data.agrarischPrijsPerHa);
+  const agrarischWaardeFallback = Math.round((kavelM2 / 10000) * data.agrarischPrijsPerHa);
+  const autoWaarde = data.wozWaarde ?? agrarischWaardeFallback;
+
+  const [overschrijfWaarde, setOverschrijfWaarde] = useState<number | null>(null);
+  const [bewerkModus, setBewerkModus] = useState(false);
+  const [inputWaarde, setInputWaarde] = useState("");
+
+  const huidigeWaarde = overschrijfWaarde ?? autoWaarde;
+  const huidigeWaardeLabel = overschrijfWaarde != null
+    ? "Huidige waarde (handmatig)"
+    : data.wozWaarde
+    ? `Marktwaarde WOZ ${data.wozPeildatum ?? ""}`
+    : "Huidige waarde (agrarisch)";
   const bouwgrondMin = kavelM2 * data.bouwgrondPrijsPerM2Min;
   const bouwgrondMax = kavelM2 * data.bouwgrondPrijsPerM2Max;
-  const nettoMin = bouwgrondMin - data.conversiekostenMax - agrarischWaarde;
-  const nettoMax = bouwgrondMax - data.conversiekostenMin - agrarischWaarde;
+  const nettoMin = bouwgrondMin - data.conversiekostenMax - huidigeWaarde;
+  const nettoMax = bouwgrondMax - data.conversiekostenMin - huidigeWaarde;
   const maxAankoopMin = bouwgrondMin - data.conversiekostenMax;
   const maxAankoopMax = bouwgrondMax - data.conversiekostenMin;
-  const grafiekMax = bouwgrondMax * 1.1;
+  const grafiekMax = Math.max(bouwgrondMax, huidigeWaarde) * 1.1;
   const winstPositief = nettoMax > 0;
 
   return (
@@ -67,9 +80,66 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
         )}
       </div>
 
-      {/* Balken */}
+      {/* Huidige waarde — bewerkbaar */}
       <div style={{ marginBottom: "1.25rem" }}>
-        <Balk label="Huidige waarde (agrarisch)" bedragMin={agrarischWaarde} bedragMax={agrarischWaarde} kleur="#8d8d8d" max={grafiekMax} />
+        {bewerkModus ? (
+          <div style={{ display: "flex", alignItems: "flex-end", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <div style={{ flex: 1 }}>
+              <TextInput
+                id="huidige-waarde-input"
+                labelText="Huidige marktwaarde (€)"
+                placeholder={String(autoWaarde)}
+                value={inputWaarde}
+                onChange={(e) => setInputWaarde(e.target.value)}
+                size="sm"
+              />
+            </div>
+            <button
+              onClick={() => {
+                const parsed = parseInt(inputWaarde.replace(/\D/g, ""), 10);
+                if (!isNaN(parsed) && parsed > 0) setOverschrijfWaarde(parsed);
+                setBewerkModus(false);
+              }}
+              style={{ padding: "0.4rem 0.75rem", fontSize: "0.8125rem", backgroundColor: "#0f62fe", color: "#fff", border: "none", cursor: "pointer", flexShrink: 0, height: "2rem" }}
+            >
+              Opslaan
+            </button>
+            <button
+              onClick={() => setBewerkModus(false)}
+              style={{ padding: "0.4rem 0.75rem", fontSize: "0.8125rem", backgroundColor: "transparent", color: "#525252", border: "1px solid #c6c6c6", cursor: "pointer", flexShrink: 0, height: "2rem" }}
+            >
+              Annuleren
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+            <div>
+              <span style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)" }}>{huidigeWaardeLabel}</span>
+              <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.125rem" }}>
+                Vooringevuld met WOZ — pas aan als u de werkelijke waarde kent.
+              </p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span style={{ fontWeight: 600, fontSize: "0.875rem" }}>{eur(huidigeWaarde)}</span>
+              <button
+                onClick={() => { setInputWaarde(String(huidigeWaarde)); setBewerkModus(true); }}
+                title="Waarde aanpassen"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "0.125rem", color: "#525252", display: "flex", alignItems: "center" }}
+              >
+                <Edit size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+        {!bewerkModus && (
+          <div style={{ height: "0.5rem", backgroundColor: "var(--cds-layer-02, #e0e0e0)", borderRadius: 0, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${Math.min(100, (huidigeWaarde / grafiekMax) * 100)}%`, backgroundColor: "#8d8d8d", transition: "width 0.3s ease" }} />
+          </div>
+        )}
+      </div>
+
+      {/* Overige balken */}
+      <div style={{ marginBottom: "1.25rem" }}>
         <Balk label="Conversiekosten (procedures + onderzoeken)" bedragMin={data.conversiekostenMin} bedragMax={data.conversiekostenMax} kleur="#f1c21b" max={grafiekMax} />
         <Balk label={`Waarde na conversie (bouwgrond, ${data.regio})`} bedragMin={bouwgrondMin} bedragMax={bouwgrondMax} kleur="#24a148" max={grafiekMax} />
       </div>
@@ -87,7 +157,7 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
               {winstPositief ? "Potentiële netto waardestijging" : "Netto resultaat (negatief scenario)"}
             </p>
             <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary)" }}>
-              Bouwgrondwaarde − conversiekosten − huidige agrarische waarde
+              Bouwgrondwaarde − conversiekosten − {data.wozWaarde ? `WOZ-waarde ${data.wozPeildatum}` : "huidige agrarische waarde"}
             </p>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -111,7 +181,11 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
       <div style={{ display: "flex", gap: "0.5rem", fontSize: "0.75rem", color: "var(--cds-text-secondary)" }}>
         <Information size={14} style={{ flexShrink: 0, marginTop: "0.125rem" }} />
         <p>
-          Agrarische grondprijs: {eur(data.agrarischPrijsPerHa)}/ha ({data.provincie}). Bouwgrondprijs na correcties: {eur(data.bouwgrondPrijsPerM2Min)}–{eur(data.bouwgrondPrijsPerM2Max)}/m². Bron: {data.databron}. Berekening is indicatief en vervangt geen taxatierapport.
+          {data.wozWaarde
+            ? <>WOZ-waarde {data.wozPeildatum}: {eur(data.wozWaarde)} (bron: Kadaster WOZ-waardeloket). </>
+            : <>Agrarische grondprijs: {eur(data.agrarischPrijsPerHa)}/ha ({data.provincie}) — geen WOZ-waarde beschikbaar. </>
+          }
+          Bouwgrondprijs na correcties: {eur(data.bouwgrondPrijsPerM2Min)}–{eur(data.bouwgrondPrijsPerM2Max)}/m² ({data.regio}). Bron: {data.databron}. Berekening is indicatief en vervangt geen taxatierapport.
         </p>
       </div>
     </Tile>

@@ -12,6 +12,7 @@ export interface PDOKSuggestie {
 export interface PDOKLocatie {
   id: string;
   weergavenaam: string;
+  type?: string;
   adresType?: string;
   straatnaam?: string;
   huisnummer?: string;
@@ -23,18 +24,25 @@ export interface PDOKLocatie {
   centroide_ll?: string; // "POINT(lon lat)"
   adresseerbaarobject_id?: string;
   gekoppeld_perceel?: string[]; // e.g. ["VKV00-G-305"]
+  kadastrale_grootte?: number;  // m², aanwezig bij type=perceel
 }
+
+// Matches garage/storage suffixes like "42A-G1", "42-P2", "42B-B3"
+const SUBUNIT_RE = /\s\d+[A-Z]?-[A-Z]\d/i;
 
 export async function suggesteerAdres(query: string): Promise<PDOKSuggestie[]> {
   const params = new URLSearchParams({
     q: query,
     fq: "type:(adres OR perceel)",
-    rows: "8",
+    rows: "12",
   });
   const res = await fetch(`${PDOK_SUGGEST}?${params}`);
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.response?.docs ?? []) as PDOKSuggestie[];
+  const docs: PDOKSuggestie[] = data.response?.docs ?? [];
+  // Remove garage/parking/subunit addresses unless no other results exist
+  const hoofdAdressen = docs.filter((d) => !SUBUNIT_RE.test(d.weergavenaam));
+  return (hoofdAdressen.length > 0 ? hoofdAdressen : docs).slice(0, 8);
 }
 
 export async function lookupLocatie(id: string): Promise<PDOKLocatie | null> {
