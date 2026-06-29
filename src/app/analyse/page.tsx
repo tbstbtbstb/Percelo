@@ -89,7 +89,7 @@ export default function AnalysePage() {
     const adres = params.get("adres");
     if (lat && lon && adres) {
       const oppervlakte = params.get("oppervlakte");
-      setPerceel({
+      const p: Perceel = {
         adres,
         gemeente: params.get("gemeente") ?? undefined,
         provincie: params.get("provincie") ?? undefined,
@@ -97,7 +97,9 @@ export default function AnalysePage() {
         lon: parseFloat(lon),
         bestemmingHint: params.get("bestemming") ?? undefined,
         perceelOppervlakte: oppervlakte ? parseInt(oppervlakte, 10) : undefined,
-      });
+      };
+      setPerceel(p);
+      startAnalyse(p);
       return;
     }
 
@@ -156,8 +158,9 @@ export default function AnalysePage() {
     }
   }
 
-  async function startAnalyse() {
-    if (!perceel) return;
+  async function startAnalyse(perceelOverride?: Perceel) {
+    const p = perceelOverride ?? perceel;
+    if (!p) return;
     setIsLoading(true);
     setFout(null);
     setResultaat(null);
@@ -171,7 +174,7 @@ export default function AnalysePage() {
         const res = await fetch("/api/analyse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ perceel }),
+          body: JSON.stringify({ perceel: p }),
         });
 
         if (!res.ok) {
@@ -283,7 +286,7 @@ export default function AnalysePage() {
           )}
 
           <Button
-            onClick={startAnalyse}
+            onClick={() => startAnalyse()}
             disabled={!perceel || isLoading}
             size="md"
             style={{ width: "100%", maxWidth: "100%", justifyContent: "center" }}

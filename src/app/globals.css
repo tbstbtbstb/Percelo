@@ -287,3 +287,17 @@ body.percelo-menu-open {
     gap: 0.375rem;
   }
 }
+
+/* Recharts: geen focusring op SVG-elementen */
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+.recharts-surface:focus,
+.recharts-layer:focus,
+.recharts-polar-grid:focus,
+.recharts-polar-angle-axis:focus,
+.recharts-radar:focus,
+.recharts-radar-polygon:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
