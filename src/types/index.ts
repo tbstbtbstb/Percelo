@@ -112,6 +112,7 @@ export interface PrecedentPlan {
   naam: string
   type: string
   datum?: string
+  identificatie?: string
 }
 
 export type AdviesLabel = "go" | "twijfel" | "no-go";

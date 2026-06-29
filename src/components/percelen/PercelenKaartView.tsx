@@ -2,11 +2,13 @@
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Select, SelectItem, NumberInput } from "@carbon/react";
-import { ChevronLeft, ChevronRight, Filter } from "@carbon/icons-react";
+import { Select, SelectItem } from "@carbon/react";
+import { ArrowRight, ChevronLeft, ChevronRight, Filter } from "@carbon/icons-react";
 import type { KansrijkPerceel } from "@/types";
-import { MOCK_PERCELEN } from "@/lib/percelenMockData";
+import PERCELEN_DATA from "@/lib/percelenData.json";
 import { EigenaarKaart } from "./EigenaarKaart";
+
+const ALLE_PERCELEN = PERCELEN_DATA as KansrijkPerceel[];
 
 const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
   ssr: false,
@@ -17,7 +19,8 @@ const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
   ),
 });
 
-const DRAWER_WIDTH = 380;
+const DRAWER_WIDTH = 440;
+const DRAWER_MARGIN = 20; // 1.25rem — ruimte tussen kaartrand en panel
 const IS_AGRARISCH_RE = /agrarisch|landbouw|akkerbouw|tuinbouw|glastuinbouw|veeteelt|weidegrond|polder|buitengebied/i;
 
 function eur(n: number) {
@@ -53,12 +56,12 @@ export function PercelenKaartView() {
   const [tabStyle, setTabStyle] = useState<{ top: number; height: number } | null>(null);
 
   const provincies = useMemo(
-    () => [...new Set(MOCK_PERCELEN.map((p) => p.provincie))].sort(),
+    () => [...new Set(ALLE_PERCELEN.map((p) => p.provincie))].sort(),
     []
   );
 
   const gefilterd = useMemo(() =>
-    MOCK_PERCELEN
+    ALLE_PERCELEN
       .filter((p) =>
         IS_AGRARISCH_RE.test(p.bestemming) &&
         (!filterProvincie || p.provincie === filterProvincie) &&
@@ -100,7 +103,7 @@ export function PercelenKaartView() {
       <div
         className={`percelo-kaart-drawer${drawerOpen ? "" : " percelo-kaart-drawer--gesloten"}`}
       >
-        <div ref={drawerInnerRef} style={{ width: `${DRAWER_WIDTH}px`, height: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
+        <div ref={drawerInnerRef} style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
 
           {/* Uitsteek-tab voor geselecteerde kaart */}
           {tabStyle && (
@@ -140,7 +143,7 @@ export function PercelenKaartView() {
                 style={{
                   display: "flex", alignItems: "center", gap: "0.3rem",
                   background: filterOpen ? "#e8e8e8" : "none",
-                  border: "1px solid #e0e0e0", borderRadius: "2px",
+                  border: "1px solid #e0e0e0", borderRadius: "4px",
                   cursor: "pointer", padding: "0.3rem 0.6rem",
                   fontSize: "0.75rem", color: "#525252", flexShrink: 0,
                 }}
@@ -155,29 +158,49 @@ export function PercelenKaartView() {
                 <Select
                   id="filter-provincie-kaart"
                   labelText="Provincie"
-                  size="sm"
+                  size="lg"
                   value={filterProvincie}
                   onChange={(e) => setFilterProvincie(e.target.value)}
                 >
                   <SelectItem value="" text="Alle provincies" />
                   {provincies.map((p) => <SelectItem key={p} value={p} text={p} />)}
                 </Select>
-                <NumberInput
-                  id="filter-slagingskans-kaart"
-                  label="Min. slagingskans (%)"
-                  size="sm"
-                  min={0} max={100} step={5}
-                  value={filterMinSlagingskans}
-                  onChange={(_e, { value }) => setFilterMinSlagingskans(Number(value) || 0)}
-                />
-                <NumberInput
-                  id="filter-marge-kaart"
-                  label="Min. marge (×€1.000)"
-                  size="sm"
-                  min={0} step={50}
-                  value={filterMinMarge}
-                  onChange={(_e, { value }) => setFilterMinMarge(Number(value) || 0)}
-                />
+                <div>
+                  <label htmlFor="filter-slagingskans-kaart" style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#525252", marginBottom: "0.25rem" }}>
+                    Min. slagingskans (%)
+                  </label>
+                  <input
+                    id="filter-slagingskans-kaart"
+                    type="number"
+                    min={0} max={100}
+                    value={filterMinSlagingskans}
+                    onChange={(e) => setFilterMinSlagingskans(Number(e.target.value) || 0)}
+                    style={{
+                      width: "100%", height: "3rem", padding: "0 0.75rem",
+                      fontSize: "0.875rem", color: "#161616",
+                      backgroundColor: "#ffffff", borderRadius: "4px",
+                      outline: "1px solid #e0e0e0", border: "none",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="filter-marge-kaart" style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#525252", marginBottom: "0.25rem" }}>
+                    Min. marge (×€1.000)
+                  </label>
+                  <input
+                    id="filter-marge-kaart"
+                    type="number"
+                    min={0}
+                    value={filterMinMarge}
+                    onChange={(e) => setFilterMinMarge(Number(e.target.value) || 0)}
+                    style={{
+                      width: "100%", height: "3rem", padding: "0 0.75rem",
+                      fontSize: "0.875rem", color: "#161616",
+                      backgroundColor: "#ffffff", borderRadius: "4px",
+                      outline: "1px solid #e0e0e0", border: "none",
+                    }}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -191,12 +214,10 @@ export function PercelenKaartView() {
                   onClick={() => handleSelectCard(p)}
                   style={{
                     padding: "0.875rem 1rem",
-                    paddingLeft: geselecteerdId === p.id ? "calc(1rem - 3px)" : "1rem",
-                    borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
-                    borderLeft: geselecteerdId === p.id ? "6px solid #0f62fe" : "3px solid transparent",
+                    borderBottom: "1px solid #e0e0e0",
                     backgroundColor: geselecteerdId === p.id ? "#edf5ff" : "#ffffff",
                     cursor: "pointer",
-                    transition: "background-color 0.15s ease, border-left 0.15s ease, padding-left 0.15s ease",
+                    transition: "background-color 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
                     if (geselecteerdId !== p.id)
@@ -239,21 +260,21 @@ export function PercelenKaartView() {
                     </div>
                     <div>
                       <div style={{ color: "#525252" }}>ROI</div>
-                      <div style={{ fontWeight: 600, color: p.roiPct >= 200 ? "#24a148" : "#b28600" }}>{p.roiPct}%</div>
+                      {(() => { const roi = Math.round(p.margeMax / p.geschatteAankoopprijs * 100); return <div style={{ fontWeight: 600, color: roi >= 200 ? "#24a148" : "#b28600" }}>{roi}%</div>; })()}
                     </div>
                   </div>
 
                   {/* Actieknoppen */}
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem", justifyContent: "space-between" }}>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenEigenaarId(openEigenaarId === p.id ? null : p.id);
                       }}
                       style={{
-                        flex: 1, padding: "0.3rem 0.5rem", fontSize: "0.75rem",
+                        padding: "0.3rem 1rem", fontSize: "0.75rem",
                         backgroundColor: "#f4f4f4", color: "#161616",
-                        border: "1px solid #e0e0e0", cursor: "pointer",
+                        border: "1px solid #e0e0e0", borderRadius: "4px", cursor: "pointer",
                       }}
                     >
                       Eigenaar
@@ -261,15 +282,16 @@ export function PercelenKaartView() {
                     <a
                       href={`/analyse?lat=${p.lat}&lon=${p.lon}&adres=${encodeURIComponent(p.perceelId + ", " + p.gemeente)}&gemeente=${encodeURIComponent(p.gemeente)}&provincie=${encodeURIComponent(p.provincie)}&bestemming=${encodeURIComponent(p.bestemming)}&oppervlakte=${p.oppervlakteM2}`}
                       onClick={(e) => e.stopPropagation()}
+                      aria-label="Analyseer"
                       style={{
-                        flex: 1, padding: "0.3rem 0.5rem", fontSize: "0.75rem",
+                        width: "2rem", height: "2rem", flexShrink: 0,
                         backgroundColor: "#0f62fe", color: "#ffffff",
-                        border: "none", cursor: "pointer",
-                        textDecoration: "none", textAlign: "center",
-                        display: "block",
+                        border: "none", borderRadius: "4px", cursor: "pointer",
+                        textDecoration: "none",
+                        display: "flex", alignItems: "center", justifyContent: "center",
                       }}
                     >
-                      Analyseer →
+                      <ArrowRight size={16} />
                     </a>
                   </div>
                 </div>
@@ -289,20 +311,19 @@ export function PercelenKaartView() {
       <button
         onClick={() => setDrawerOpen((o) => !o)}
         className="percelo-kaart-toggle"
-        style={{ left: drawerOpen ? `${DRAWER_WIDTH}px` : "0" } as React.CSSProperties}
+        style={{ left: drawerOpen ? `${DRAWER_WIDTH + DRAWER_MARGIN}px` : `${DRAWER_MARGIN}px` } as React.CSSProperties}
         aria-label={drawerOpen ? "Lijst verbergen" : "Lijst tonen"}
       >
         {drawerOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
       </button>
 
-      {/* Kaart — vult de ruimte rechts van de drawer */}
+      {/* Kaart — altijd fullscreen, panel zweeft eroverheen */}
       <div style={{
         position: "absolute",
         top: 0,
-        left: drawerOpen ? DRAWER_WIDTH : 0,
+        left: 0,
         right: 0,
         bottom: 0,
-        transition: "left 0.25s ease",
       }}>
         <KaartMetPins
           percelen={gefilterd}

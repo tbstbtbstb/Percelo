@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import { useUser } from "@clerk/nextjs";
 import { Button, InlineLoading } from "@carbon/react";
 import { Location, Download, Compare, Locked } from "@carbon/icons-react";
-import { AdviesKaart } from "@/components/analysis/AdviesKaart";
+import { AdviesHeader, AdviesDetails } from "@/components/analysis/AdviesKaart";
 import { AddressSearch } from "@/components/analysis/AddressSearch";
-import { ScoreDisplay } from "@/components/analysis/ScoreDisplay";
+import { ScoreHoofd, ScoreFactoren } from "@/components/analysis/ScoreDisplay";
 import { ActiePlan } from "@/components/analysis/ActiePlan";
 import { EmailTemplates } from "@/components/analysis/EmailTemplates";
 import { OpdrachtBrieven } from "@/components/analysis/OpdrachtBrieven";
@@ -258,8 +258,9 @@ export default function AnalysePage() {
           left: "1.25rem",
           width: "min(440px, calc(100% - 2.5rem))",
           zIndex: 100,
-          backgroundColor: "#F4F4F4",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
+          backgroundColor: "#ffffff",
+          borderRadius: "12px",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)",
           display: "flex",
           flexDirection: "column",
           gap: "0.75rem",
@@ -280,7 +281,7 @@ export default function AnalysePage() {
           />
 
           {fout && (
-            <div style={{ padding: "0.5rem 0.75rem", backgroundColor: "#fff1f1", borderLeft: "3px solid #da1e28", fontSize: "0.8125rem", color: "#a2191f" }}>
+            <div style={{ padding: "0.5rem 0.75rem", backgroundColor: "#fff5f5", border: "1px solid #fecaca", borderRadius: "6px", fontSize: "0.8125rem", color: "#b91c1c" }}>
               {fout}
             </div>
           )}
@@ -346,19 +347,24 @@ export default function AnalysePage() {
 
       {resultaat.reedsBouwgrond ? (
         <div style={{ maxWidth: "52rem", margin: "0 auto", padding: "1.5rem 1rem 3rem" }}>
-          <div style={{ padding: "1.5rem", backgroundColor: "#defbe6", borderLeft: "4px solid #24a148", display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
-            <Location size={20} style={{ color: "#24a148", flexShrink: 0, marginTop: "0.125rem" }} />
-            <div>
-              <p style={{ fontWeight: 600, color: "#044317" }}>Dit perceel heeft al een bouw- of woonbestemming</p>
-              {resultaat.huidigeBestemming && resultaat.huidigeBestemming !== "onbekend" && (
-                <p style={{ fontSize: "0.875rem", color: "#044317", marginTop: "0.25rem" }}>
-                  Huidige bestemming: <strong>{resultaat.huidigeBestemming}</strong>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+            <div style={{ height: "4px", backgroundColor: "#24a148" }} />
+            <div style={{ padding: "1.5rem", display: "flex", alignItems: "flex-start", gap: "0.875rem" }}>
+              <div style={{ width: "2.25rem", height: "2.25rem", borderRadius: "50%", backgroundColor: "#24a148", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Location size={16} style={{ color: "#ffffff" }} />
+              </div>
+              <div>
+                <p style={{ fontWeight: 700, color: "#161616", marginBottom: "0.375rem" }}>Dit perceel heeft al een bouw- of woonbestemming</p>
+                {resultaat.huidigeBestemming && resultaat.huidigeBestemming !== "onbekend" && (
+                  <p style={{ fontSize: "0.875rem", color: "#525252", marginBottom: "0.375rem" }}>
+                    Huidige bestemming: <strong style={{ color: "#161616" }}>{resultaat.huidigeBestemming}</strong>
+                  </p>
+                )}
+                <p style={{ fontSize: "0.875rem", color: "#525252", lineHeight: 1.5 }}>
+                  Een bestemmingswijziging is voor dit perceel niet nodig — de grond is al juridisch geschikt voor woningbouw of ander gebruik.
+                  U kunt direct een omgevingsvergunning aanvragen bij de gemeente.
                 </p>
-              )}
-              <p style={{ fontSize: "0.875rem", color: "#0e6027", marginTop: "0.5rem", lineHeight: 1.5 }}>
-                Een bestemmingswijziging is voor dit perceel niet nodig — de grond is al juridisch geschikt voor woningbouw of ander gebruik.
-                U kunt direct een omgevingsvergunning aanvragen bij de gemeente.
-              </p>
+              </div>
             </div>
           </div>
         </div>
@@ -397,8 +403,10 @@ export default function AnalysePage() {
             {actieveTab === "resultaten" && (
               tabVergrendeld("resultaten") ? <UpgradeWall tabLabel="Analyseresultaten" /> : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                  <ScoreDisplay score={resultaat.totaalScore} scoreKlasse={resultaat.scoreKlasse} factoren={resultaat.factoren} precedentPlannen={resultaat.precedentPlannen} gemeente={resultaat.perceel.gemeente} hardBlockers={resultaat.hardBlockers} />
-                  {resultaat.adviesKaart && <AdviesKaart data={resultaat.adviesKaart} />}
+                  <ScoreHoofd score={resultaat.totaalScore} scoreKlasse={resultaat.scoreKlasse} hardBlockers={resultaat.hardBlockers} />
+                  {resultaat.adviesKaart && <AdviesHeader data={resultaat.adviesKaart} />}
+                  <ScoreFactoren score={resultaat.totaalScore} scoreKlasse={resultaat.scoreKlasse} factoren={resultaat.factoren} precedentPlannen={resultaat.precedentPlannen} gemeente={resultaat.perceel.gemeente} />
+                  {resultaat.adviesKaart && <AdviesDetails data={resultaat.adviesKaart} />}
                 </div>
               )
             )}
@@ -411,14 +419,17 @@ export default function AnalysePage() {
               tabVergrendeld("waardestijging") ? <UpgradeWall tabLabel="Waardestijging" /> : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                   <WaardestijgingCalculator data={resultaat.waardestijging} />
-                  <div style={{ padding: "1rem 1.25rem", backgroundColor: "#edf5ff", borderLeft: "4px solid #0f62fe", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-                    <div>
-                      <p style={{ fontWeight: 600, fontSize: "0.875rem", color: "#001d6c" }}>Vergelijk buurgemeenten</p>
-                      <p style={{ fontSize: "0.8125rem", color: "#0043ce", marginTop: "0.125rem" }}>Bekijk welke gemeente in de buurt het meest open staat voor woningbouw.</p>
+                  <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+                    <div style={{ height: "4px", backgroundColor: "#0f62fe" }} />
+                    <div style={{ padding: "1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                      <div>
+                        <p style={{ fontWeight: 700, fontSize: "0.875rem", color: "#161616", marginBottom: "0.25rem" }}>Vergelijk buurgemeenten</p>
+                        <p style={{ fontSize: "0.8125rem", color: "#525252" }}>Bekijk welke gemeente in de buurt het meest open staat voor woningbouw.</p>
+                      </div>
+                      <a href={`/vergelijker?lat=${resultaat.perceel.lat}&lon=${resultaat.perceel.lon}&gemeente=${encodeURIComponent(resultaat.perceel.gemeente ?? "")}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", padding: "0.5rem 1rem", fontSize: "0.875rem", fontWeight: 600, backgroundColor: "#0f62fe", color: "#ffffff", textDecoration: "none", borderRadius: "4px", flexShrink: 0 }}>
+                        <Compare size={16} /> Naar gemeentevergelijker
+                      </a>
                     </div>
-                    <a href={`/vergelijker?lat=${resultaat.perceel.lat}&lon=${resultaat.perceel.lon}&gemeente=${encodeURIComponent(resultaat.perceel.gemeente ?? "")}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", padding: "0.5rem 1rem", fontSize: "0.875rem", fontWeight: 500, backgroundColor: "#0f62fe", color: "#ffffff", textDecoration: "none", flexShrink: 0 }}>
-                      <Compare size={16} /> Naar gemeentevergelijker
-                    </a>
                   </div>
                 </div>
               )

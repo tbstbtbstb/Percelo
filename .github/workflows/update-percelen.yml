@@ -1,0 +1,39 @@
+name: Dagelijkse update kansrijke percelen
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # Elke nacht om 03:00 UTC
+  workflow_dispatch: # Handmatig triggeren via GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js instellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dependencies installeren
+        run: npm ci
+
+      - name: Percelen scoren
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+        run: node scripts/score-percelen.mjs
+
+      - name: Commit en push als er wijzigingen zijn
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/lib/percelenData.json
+          git diff --cached --quiet || git commit -m "chore: dagelijkse update kansrijke percelen"
+          git push

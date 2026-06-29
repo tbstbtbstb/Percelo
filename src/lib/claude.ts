@@ -42,6 +42,7 @@ async function roepGroepAan(prompt: string): Promise<string> {
       const msg = await groqClient(key).chat.completions.create({
         model: "llama-3.3-70b-versatile",
         max_tokens: 4096,
+        temperature: 0,
         messages: [
           { role: "system", content: "Je bent een expert in Nederlandse ruimtelijke ordening. Reageer altijd in valide JSON zonder markdown code blocks." },
           { role: "user", content: prompt },

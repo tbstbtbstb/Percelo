@@ -26,6 +26,7 @@ interface BestemmingInfo {
   reedsBouwgrond: boolean
   isAgrarisch: boolean
   planDatum?: string
+  planViewUrl?: string
 }
 
 function classifyVlak(naam: string, hoofdgroep?: string): BestemmingInfo {
@@ -61,6 +62,7 @@ const RELEVANTE_TYPEN = new Set([
 
 type PlanRecord = {
   id?: string
+  identificatie?: string
   naam?: string
   type?: string
   planstatusInfo?: { planstatus?: string }
@@ -146,6 +148,9 @@ async function fetchBestemmingInfo(lat: number, lon: number): Promise<Bestemming
   const bestePlan = kiesBestePlan(plannen)
   planNaam = bestePlan?.naam ?? null
   const planDatum: string | undefined = (bestePlan as { planstatusInfo?: { datum?: string } })?.planstatusInfo?.datum ?? undefined
+  const planViewUrl: string | undefined = bestePlan?.identificatie
+    ? `https://omgevingswet.overheid.nl/regels-op-de-kaart/document?documentID=${bestePlan.identificatie}`
+    : undefined
 
   const relevantePlanIds = plannen
     .filter(p => RELEVANTE_TYPEN.has(p.type ?? "") &&
@@ -172,7 +177,7 @@ async function fetchBestemmingInfo(lat: number, lon: number): Promise<Bestemming
         )
         if (res.ok) {
           const result = vlakkenUitData(await res.json())
-          if (result) return { ...result, planDatum }
+          if (result) return { ...result, planDatum, planViewUrl }
         } else {
           console.error(`[scoring] vlakken/${id} ${res.status}`)
           break
@@ -192,6 +197,7 @@ async function fetchBestemmingInfo(lat: number, lon: number): Promise<Bestemming
       reedsBouwgrond: false,
       isAgrarisch: AGRARISCH_NAAM_TERMEN.some(t => n.includes(t)),
       planDatum,
+      planViewUrl,
     }
   }
 
@@ -249,6 +255,7 @@ async function checkHistorischePrecedenten(lat: number, lon: number, gemeente: s
 
     const data = await res.json()
     const plannen: Array<{
+      identificatie?: string
       naam?: string
       type?: string
       planstatusInfo?: { planstatus?: string; datum?: string }
@@ -304,6 +311,7 @@ async function checkHistorischePrecedenten(lat: number, lon: number, gemeente: s
       naam: p.naam ?? "Onbekend plan",
       type: p.type ?? "wijzigingsplan",
       datum: p.planstatusInfo?.datum,
+      identificatie: p.identificatie,
     }))
 
     return { score, aantalPrecedenten: totaal, toelichting, plannen: plannenLijst }
@@ -348,19 +356,19 @@ async function checkNatura2000Nabijheid(lat: number, lon: number): Promise<{
 
     if (binnen500) return {
       score: 35,
-      toelichting: "Perceel ligt binnen 500m van een Natura2000-gebied — een AERIUS-berekening is verplicht. Nabijheid alleen is geen blocker: bestaande bebouwing in de omgeving bewijst dat projecten hier doorgang kunnen vinden mits de depositie onder 0,00 mol N/ha/jaar blijft. Laat een stikstofadviseur dit vroeg in het traject berekenen.",
+      toelichting: "Perceel ligt naast een Natura 2000-gebied — een beschermd natuurgebied. U bent verplicht te laten berekenen hoeveel stikstof uw bouwproject uitstoot. Woningbouw is mogelijk als die uitstoot laag genoeg blijft, maar het kost extra onderzoek (€500–€1.500) en vertraagt de procedure.",
     }
     if (binnen2000) return {
       score: 52,
-      toelichting: "Perceel ligt binnen 2km van een Natura2000-gebied — AERIUS-berekening aanbevolen. Bij kleine woningbouwprojecten blijft de depositie doorgaans onder de drempel van 0,00 mol N/ha/jaar. Laat dit vroegtijdig toetsen.",
+      toelichting: "Perceel ligt binnen 2km van een Natura 2000-gebied. Een stikstofberekening is verstandig voordat u verder gaat. Bij kleine woningbouwprojecten blijft de uitstoot doorgaans ruim onder de grenswaarde.",
     }
     if (binnen10000) return {
       score: 72,
-      toelichting: "Perceel ligt binnen 10km van een Natura2000-gebied — bij grotere projecten of intensief verkeer is een AERIUS-check verstandig. Risico is voor de meeste woningbouwinitiatieven beperkt.",
+      toelichting: "Een Natura 2000-gebied ligt op enige afstand. Bij normale woningbouw is stikstof hier zelden een probleem — alleen bij grootschalige projecten is een extra check nodig.",
     }
     return {
       score: 88,
-      toelichting: "Geen Natura2000-gebieden binnen 10km — stikstofproblematiek vormt naar verwachting geen obstakel.",
+      toelichting: "Geen Natura 2000-gebieden in de omgeving aangetroffen — stikstof speelt hier naar verwachting geen rol.",
     }
   } catch (e) {
     console.error("[scoring] Natura2000 check error:", e)
@@ -399,13 +407,13 @@ async function checkNNNGNN(lat: number, lon: number): Promise<{
         score: 5,
         binnenNNN: true,
         toelichting:
-          "Perceel ligt binnen het Nationaal Natuur Netwerk (NNN/EHS) — bestemmingswijziging naar wonen is in vrijwel alle provincies verboden. Dit is een kritieke blocker.",
+          "Perceel ligt in het Nationaal Natuur Netwerk (NNN) — een wettelijk beschermd natuurgebied. Omzetting naar woningbouw is in vrijwel alle provincies verboden. Dit is een harde blokkade.",
       }
     }
     return {
       score: 90,
       binnenNNN: false,
-      toelichting: "Perceel ligt buiten het NNN — geen NNN-bezwaar voor bestemmingswijziging",
+      toelichting: "Perceel ligt buiten het Nationaal Natuur Netwerk — geen bezwaar vanuit natuurbescherming.",
     }
   } catch (e) {
     console.error("[scoring] NNN check error:", e)
@@ -454,13 +462,13 @@ async function checkWatertoets(lat: number, lon: number): Promise<{
         score: 30,
         nabijWater: true,
         toelichting:
-          "Perceel ligt nabij open water (meer, plas of kanaal) — watertoets met waterschap is verplicht en kan bouwen ernstig beperken.",
+          "Perceel grenst aan open water (meer, plas of kanaal). U bent verplicht het waterschap te raadplegen. Het waterschap kan bouwen beperken of extra eisen stellen aan waterafvoer en drainage.",
       }
     }
     return {
       score: 82,
       nabijWater: false,
-      toelichting: "Geen meren, plassen of kanalen in de directe omgeving — watertoets vormt naar verwachting geen hard obstakel",
+      toelichting: "Geen meren of kanalen direct naast het perceel — het waterschap zal naar verwachting geen zware eisen stellen.",
     }
   } catch (e) {
     console.error("[scoring] watertoets check error:", e)
@@ -483,24 +491,24 @@ function berekenPlanleeftijdScore(planDatum: string | undefined): { score: numbe
   if (jaren < 3) {
     return {
       score: 20,
-      toelichting: `Bestemmingsplan is recent vastgesteld (${jaar}) — gemeenten herzien plannen zelden binnen 3 jaar na vaststelling`,
+      toelichting: `Het bestemmingsplan is in ${jaar} vastgesteld — nog geen 3 jaar geleden. Gemeenten passen plannen zelden zo snel aan na een vaststelling, wat uw kansen nu verkleint.`,
     }
   }
   if (jaren < 7) {
     return {
       score: 50,
-      toelichting: `Bestemmingsplan stamt uit ${jaar} (${Math.round(jaren)} jaar oud) — herziening is mogelijk maar vereist een overtuigend argument`,
+      toelichting: `Het bestemmingsplan stamt uit ${jaar} (${Math.round(jaren)} jaar oud). Wijzigen is mogelijk, maar u moet de gemeente overtuigen dat er een goede reden is om het plan al aan te passen.`,
     }
   }
   if (jaren < 15) {
     return {
       score: 72,
-      toelichting: `Bestemmingsplan stamt uit ${jaar} (${Math.round(jaren)} jaar oud) — plan is rijp voor herziening; gemeenten zijn ontvankelijker voor initiatieven`,
+      toelichting: `Het bestemmingsplan stamt uit ${jaar} (${Math.round(jaren)} jaar oud). Na zoveel jaar staat de gemeente doorgaans open voor een herziening — uw initiatief past in dat traject.`,
     }
   }
   return {
     score: 88,
-    toelichting: `Bestemmingsplan stamt uit ${jaar} (${Math.round(jaren)} jaar oud) — verouderd plan, hoge kans dat gemeente actief zoekt naar actualisering`,
+    toelichting: `Het bestemmingsplan uit ${jaar} is verouderd (${Math.round(jaren)} jaar oud). De gemeente is waarschijnlijk zelf al op zoek naar een actualisering — uw initiatief kan goed aansluiten.`,
   }
 }
 
@@ -574,27 +582,27 @@ async function checkWoningbouwtekort(gemeente: string): Promise<{
     let context: string
     if (prijs >= 600_000) {
       score = 95; niveau = "extreem hoge"
-      context = "Acute schaarste — gemeente staat onder maximale druk om woningbouw te faciliteren."
+      context = "Woningen zijn hier zeer schaars en duur. De gemeente staat onder maximale druk om mee te werken aan nieuwe woningbouw — dat is een sterk argument voor uw aanvraag."
     } else if (prijs >= 450_000) {
       score = 85; niveau = "zeer hoge"
-      context = "Hoge schaarste — gemeente heeft sterke politieke prikkel voor bestemmingswijzigingen."
+      context = "Woningen zijn schaars en prijzig. De gemeente heeft een sterke reden om woningbouw te stimuleren — dat werkt in uw voordeel."
     } else if (prijs >= 350_000) {
       score = 72; niveau = "hoge"
-      context = "Significante schaarste — woningbouwtekort versterkt het argument richting gemeente."
+      context = "Er is duidelijke krapte op de woningmarkt. U kunt dit als argument gebruiken richting de gemeente: er is vraag naar meer woningen."
     } else if (prijs >= 275_000) {
       score = 60; niveau = "bovengemiddelde"
-      context = "Matige druk — woningbehoefte speelt, maar minder urgent dan in de Randstad."
+      context = "Er is enige krapte, maar minder urgent dan in de grote steden. De gemeente heeft reden om mee te werken, maar het is geen dwingende noodzaak."
     } else if (prijs >= 220_000) {
       score = 46; niveau = "gemiddelde"
-      context = "Beperkte marktdruk — gemeente heeft minder politieke urgentie voor extra woningbouw."
+      context = "Woningmarktdruk is beperkt — de gemeente heeft minder urgentie om extra woningbouw toe te staan."
     } else {
       score = 32; niveau = "lage"
-      context = "Weinig schaarste — gemeente zal extra woningbouw minder snel prioriteren."
+      context = "Woningen zijn hier relatief ruim voorhanden. De gemeente zal extra woningbouw minder snel prioriteren."
     }
 
     return {
       score,
-      toelichting: `Gem. verkoopprijs bestaande woningen in ${gemeente}: ${prijsFormatted} (${jaar}, CBS) — ${niveau} woningmarktdruk. ${context}`,
+      toelichting: `Gemiddelde woningprijs in ${gemeente}: ${prijsFormatted} (${jaar}, CBS) — ${niveau} woningmarktdruk. ${context}`,
     }
   } catch (e) {
     console.error("[scoring] woningbouwtekort check error:", e)
@@ -627,7 +635,7 @@ const PROVINCIALE_RESTRICTIES: Record<string, number> = {
 //  2. Hoe recent is die? (recente visies verwerken het nationale doel van 900k woningen)
 //  3. Combineren met statische basisscores die het feitelijke beleid weerspiegelen.
 async function checkProvincialeOmgevingsvisie(lat: number, lon: number, provincie: string): Promise<{
-  score: number; toelichting: string
+  score: number; toelichting: string; viewUrl?: string
 }> {
   const basisScore = PROVINCIALE_RESTRICTIES[provincie] ?? 68
 
@@ -635,7 +643,7 @@ async function checkProvincialeOmgevingsvisie(lat: number, lon: number, provinci
   if (!apiKey) {
     return {
       score: basisScore,
-      toelichting: `Provincie ${provincie} ${basisScore > 70 ? "biedt relatief gunstige" : "stelt relatief strenge"} kaders voor bestemmingswijzigingen buiten bestaand stedelijk gebied`,
+      toelichting: `Provincie ${provincie} ${basisScore > 70 ? "staat open voor woningbouw buiten de bebouwde kom" : "is terughoudend met woningbouw buiten de bebouwde kom"}`,
     }
   }
 
@@ -660,7 +668,7 @@ async function checkProvincialeOmgevingsvisie(lat: number, lon: number, provinci
 
     const data = await res.json()
     const plannen: Array<{
-      naam?: string; type?: string
+      naam?: string; type?: string; identificatie?: string
       planstatusInfo?: { planstatus?: string; datum?: string }
     }> = data._embedded?.plannen ?? []
 
@@ -675,7 +683,7 @@ async function checkProvincialeOmgevingsvisie(lat: number, lon: number, provinci
     if (!omgevingsvisies.length) {
       return {
         score: basisScore,
-        toelichting: `Provincie ${provincie} ${basisScore > 70 ? "biedt relatief gunstige" : "stelt relatief strenge"} kaders voor bestemmingswijzigingen buiten bestaand stedelijk gebied`,
+        toelichting: `Provincie ${provincie} ${basisScore > 70 ? "staat open voor woningbouw buiten de bebouwde kom" : "is terughoudend met woningbouw buiten de bebouwde kom"}`,
       }
     }
 
@@ -709,12 +717,16 @@ async function checkProvincialeOmgevingsvisie(lat: number, lon: number, provinci
       : "verouderd"
 
     const gunstig = aangepastScore > 70
+    const viewUrl = meestRecent.identificatie
+      ? `https://omgevingswet.overheid.nl/regels-op-de-kaart/document?documentID=${meestRecent.identificatie}`
+      : undefined
     return {
       score: aangepastScore,
+      viewUrl,
       toelichting:
-        `${meestRecent.naam ?? "Provinciale omgevingsvisie"}${jaar ? ` (${jaar})` : ""} is ${recencyLabel} — ` +
-        `provincie ${provincie} ${gunstig ? "biedt ruimte" : "is terughoudend"} voor bestemmingswijzigingen buiten BSG` +
-        (modifier > 0 ? ". Recente visie verwerkt de nationale woningbouwopgave positief." : ""),
+        `${meestRecent.naam ?? "Provinciale omgevingsvisie"}${jaar ? ` (${jaar})` : ""} is ${recencyLabel}. ` +
+        `Provincie ${provincie} ${gunstig ? "staat open voor woningbouw op agrarische grond buiten de bebouwde kom" : "is terughoudend met woningbouw op agrarische grond buiten de bebouwde kom"}` +
+        (modifier > 0 ? " en heeft de nationale doelstelling van 900.000 extra woningen in het beleid verwerkt." : "."),
     }
   } catch (e) {
     console.error("[scoring] provinciale omgevingsvisie error:", e)
@@ -750,20 +762,20 @@ async function checkNutsvoorzieningen(lat: number, lon: number): Promise<{
       return {
         score: 90,
         aantalObjecten,
-        toelichting: `${aantalObjecten} gebouwen binnen 75m aangetroffen — nutsvoorzieningen (water, riolering, elektra) zijn vrijwel zeker al aanwezig of direct aansluitbaar. Dit verlaagt aanlegkosten en versterkt de ruimtelijke onderbouwing.`,
+        toelichting: `${aantalObjecten} panden staan op minder dan 75 meter afstand. Water, riolering en elektriciteit zijn waarschijnlijk al aangelegd in de straat — dat scheelt u aanzienlijk in aansluitkosten.`,
       }
     }
     if (aantalObjecten >= 1) {
       return {
         score: 68,
         aantalObjecten,
-        toelichting: `${aantalObjecten} gebouw${aantalObjecten > 1 ? "en" : ""} binnen 75m aangetroffen — beperkte infrastructuur aanwezig, maar nutsaansluiting is waarschijnlijk haalbaar. Verificatie bij netbeheerder aanbevolen.`,
+        toelichting: `${aantalObjecten} pand${aantalObjecten > 1 ? "en" : ""} in de buurt aangetroffen — basisinfrastructuur is beperkt aanwezig. Navraag bij de netbeheerder is verstandig om te weten of aansluiting haalbaar is.`,
       }
     }
     return {
       score: 22,
       aantalObjecten: 0,
-      toelichting: "Geen bebouwing binnen 75m — nutsvoorzieningen (water, riolering, elektra) zijn waarschijnlijk niet aanwezig op het perceel. Aanleg is kostbaar en kan een zwaarwegend bezwaar zijn bij de gemeente.",
+      toelichting: "Er staat niets in de directe omgeving. Water, riolering en elektriciteit zijn waarschijnlijk nog niet aangelegd — dit leidt tot hoge aansluitkosten en kan een bezwaar zijn bij de gemeente.",
     }
   } catch (e) {
     console.error("[scoring] nutsvoorzieningen check error:", e)
@@ -790,15 +802,15 @@ async function checkLadderBSG(lat: number, lon: number): Promise<{
       return {
         score: 85,
         binnenBSG: true,
-        toelichting: `Perceel ligt binnen bestaand stedelijk gebied (${aantalObjecten}+ objecten in 300m) — eenvoudigere motivering vereist voor de Ladder voor duurzame verstedelijking`,
+        toelichting: `Perceel ligt in of direct naast de bebouwde kom (${aantalObjecten}+ panden in 300m). Dat is gunstig: u hoeft minder te bewijzen waarom juist hier gebouwd moet worden.`,
       }
     }
     return {
       score: 35,
       binnenBSG: false,
       toelichting: aantalObjecten === 0
-        ? "Perceel ligt buiten bestaand stedelijk gebied — u moet aantonen dat er geen ruimte is binnen BSG (Ladder stap 2, zwaarder traject)"
-        : `Perceel ligt op de rand van bebouwing (${aantalObjecten} objecten in 300m) — u moet aantonen dat er geen geschikte binnenstedelijke locaties beschikbaar zijn`,
+        ? "Perceel ligt buiten de bebouwde kom. U moet in uw aanvraag aantonen dat er geen geschikte bouwlocaties beschikbaar zijn bínnen de bebouwde kom. Dat maakt het traject zwaarder."
+        : `Perceel ligt op de rand van de bebouwde kom (${aantalObjecten} panden in 300m). U moet onderbouwen waarom hier gebouwd wordt en niet op een locatie dichter bij de kern.`,
     }
   } catch {
     return { score: 50, binnenBSG: null, toelichting: "BSG-status kon niet worden bepaald" }
@@ -817,8 +829,8 @@ async function checkGrondwaterRisico(lat: number, lon: number, provincie?: strin
     score: provincieFallbackScore,
     bodemcode: null,
     toelichting: veenProvincies.has(provincie ?? "")
-      ? `Provincie ${provincie} heeft uitgebreide veenweidegebieden — hoge grondwaterstand verhoogt funderingskosten en maakt bestemmingswijziging politiek gevoelig`
-      : "Geen verhoogd grondwaterrisico op basis van regio",
+      ? `Provincie ${provincie} heeft uitgebreide veengebieden — bouwen op veen is duur en politiek gevoelig. Extra bodemonderzoek is verstandig.`
+      : "Geen verhoogd grondwaterrisico op basis van regio.",
   }
   try {
     const url =
@@ -837,20 +849,20 @@ async function checkGrondwaterRisico(lat: number, lon: number, provincie?: strin
       return {
         score: 25,
         bodemcode: code,
-        toelichting: `Veenbodem (${code}) — hoge grondwaterstand, risico op bodemdaling en verzakking. Extra funderingsonderzoek verplicht, politiek gevoelig in veenweidebeleid`,
+        toelichting: `Veenbodem aangetroffen (code ${code}). Veen krimpt en daalt bij bebouwing, wat het risico op verzakking vergroot en funderingen duurder maakt. Extra bodemonderzoek is verplicht.`,
       }
     }
     if (isKlei) {
       return {
         score: 52,
         bodemcode: code,
-        toelichting: `Kleibodem (${code}) — verhoogd risico op zetting bij belasting. Geotechnisch onderzoek sterk aanbevolen`,
+        toelichting: `Kleibodem aangetroffen (code ${code}). Klei kan inklinken onder het gewicht van een woning — geotechnisch onderzoek is sterk aanbevolen voordat u plannen maakt.`,
       }
     }
     return {
       score: 80,
       bodemcode: code,
-      toelichting: `Zand/minerale bodem (${code}) — goede draagkracht, beperkt grondwaterrisico voor bebouwing`,
+      toelichting: `Zandbodem aangetroffen (code ${code}) — stabiele ondergrond met goede draagkracht. Geen extra funderingsmaatregelen verwacht.`,
     }
   } catch {
     return provincieFallback
@@ -922,18 +934,18 @@ function getNetcongestieScore(gemeente: string, provincie: string): { score: num
   if (CONGESTIE_HOOG.has(gemeente)) {
     return {
       score: 22,
-      toelichting: `${gemeente} staat op de gepubliceerde congestielijst van ${netbeheerder} — nieuwe aansluitingen worden geweigerd of hebben meerdere jaren wachttijd. Dit kan woningbouw ernstig vertragen. Raadpleeg de actuele congestiekaart voor de exacte status.`,
+      toelichting: `${gemeente} staat op de congestielijst van ${netbeheerder} — het elektriciteitsnet zit vol. Nieuwe woningen aansluiten op het net kan jaren duren of tijdelijk niet mogelijk zijn. Controleer de actuele status via ${netbeheerder}.`,
     }
   }
   if (CONGESTIE_MIDDEN_PROVINCIES.has(provincie)) {
     return {
       score: 58,
-      toelichting: `In ${provincie} zijn meerdere congestiegebieden actief maar ${gemeente} staat niet op de bekende lijst. Controleer de actuele status via ${netbeheerder}.`,
+      toelichting: `In ${provincie} zijn meerdere regio's waar het elektriciteitsnet vol zit, maar ${gemeente} staat niet op de bekende lijst. Controleer de actuele status via ${netbeheerder}.`,
     }
   }
   return {
     score: 82,
-    toelichting: `${gemeente} staat niet op bekende congestielijsten — netaansluiting vormt naar verwachting geen obstakel. Verifieer via ${netbeheerder}.`,
+    toelichting: `${gemeente} staat niet op de congestielijst — aansluiting op het elektriciteitsnet vormt naar verwachting geen obstakel. Verifieer dit via ${netbeheerder}.`,
   }
 }
 
@@ -979,34 +991,34 @@ async function checkGeluidshinder(lat: number, lon: number): Promise<{
       return {
         score: 15,
         toelichting:
-          "Perceel ligt binnen de geluidszones van zowel een autosnelweg als een spoorlijn — cumulatieve geluidsbelasting is zwaar. Uitgebreid akoestisch onderzoek en hogere-grenswaardenprocedure bij gemeente én waterschap zijn verplicht (Wet geluidhinder).",
+          "Perceel ligt naast zowel een snelweg als een spoorlijn — dat is zwaar qua geluid. U bent verplicht akoestisch onderzoek te laten uitvoeren. De gemeente kan extra geluidswerende maatregelen aan de gevel eisen, wat de bouwkosten verhoogt.",
       }
     }
     if (heeftSnelweg) {
       return {
         score: 28,
         toelichting:
-          "Perceel ligt binnen 300m van een autosnelweg — geluidsbelasting overschrijdt vermoedelijk de voorkeursgrenswaarde (48 dB Lden). Akoestisch onderzoek en hogere-grenswaardenprocedure zijn verplicht; geluidswerende gevelmaatregelen verhogen bouwkosten.",
+          "Perceel ligt binnen 300m van een snelweg. U bent wettelijk verplicht akoestisch onderzoek te laten uitvoeren (Wet geluidhinder). Als het geluid te hoog is, kan de gemeente extra gevelisolatie eisen — dat verhoogt de bouwkosten.",
       }
     }
     if (heeftSpoor) {
       return {
         score: 38,
         toelichting:
-          "Perceel ligt binnen 200m van een spoorlijn — railverkeerslawaai vereist akoestisch onderzoek. Woningbouw is mogelijk mits de geluidsbelasting ≤68 dB Lden blijft; gevelisolatie is doorgaans vereist.",
+          "Perceel ligt naast een spoorlijn. Akoestisch onderzoek is verplicht. Woningbouw is mogelijk als het geluid niet te hoog is, maar gevelisolatie is doorgaans een vereiste.",
       }
     }
     if (heeftRegionaalWeg) {
       return {
         score: 62,
         toelichting:
-          "Perceel ligt nabij een provinciale/regionale weg — matig verhoogde geluidsbelasting (N-weg). Akoestisch onderzoek aanbevolen; doorgaans oplosbaar met standaard gevelisolatie.",
+          "Perceel ligt naast een provinciale weg — het geluid is wat hoger dan gemiddeld. Een akoestisch onderzoek is verstandig; standaard gevelisolatie lost dit doorgaans op.",
       }
     }
     return {
       score: 88,
       toelichting:
-        "Geen autosnelwegen, spoorlijnen of regionale wegen in de directe omgeving aangetroffen — geluidsbelasting vormt naar verwachting geen obstakel.",
+        "Geen drukke wegen of spoorlijnen in de directe omgeving — geluidshinder vormt naar verwachting geen bezwaar.",
     }
   } catch (e) {
     console.error("[scoring] geluidshinder error:", e)
@@ -1050,7 +1062,7 @@ async function checkErfgoed(lat: number, lon: number): Promise<{
       return {
         score: 25,
         toelichting:
-          `Perceel ligt binnen beschermd stads-/dorpsgezicht${gezichtNaam ? ` "${gezichtNaam}"` : ""} — alle nieuwe bebouwing moet passen binnen de historische ruimtelijke structuur. Omgevingsvergunning vereist uitgebreide welstandstoets en advies van de Commissie Ruimtelijke Kwaliteit.`,
+          `Perceel ligt in beschermd${gezichtNaam ? ` "${gezichtNaam}"` : " stads- of dorpsgezicht"} — een wettelijk beschermd gebied vanwege het historisch karakter. Alle nieuwe bebouwing moet daarbinnen passen. Een extra adviescommissie beoordeelt uw bouwplannen, wat de procedure verlengt.`,
       }
     }
     if (monumenten.length > 0) {
@@ -1062,13 +1074,13 @@ async function checkErfgoed(lat: number, lon: number): Promise<{
       return {
         score: 48,
         toelichting:
-          `${monumenten.length} rijksmonument${monumenten.length > 1 ? "en" : ""}${namen ? ` (o.a. ${namen})` : ""} binnen 100m aangetroffen — bouw mag het historisch karakter niet aantasten. Overleg met RCE en een welstandsadvies zijn verplicht; dit verlengt de doorlooptijd.`,
+          `${monumenten.length} rijksmonument${monumenten.length > 1 ? "en" : ""}${namen ? ` (o.a. ${namen})` : ""} op minder dan 100m afstand. Uw bouwplannen mogen het zicht op en de omgeving van dit monument niet aantasten. De Rijksdienst voor het Cultureel Erfgoed (RCE) adviseert hierover — dat vertraagt de procedure.`,
       }
     }
     return {
       score: 88,
       toelichting:
-        "Geen rijksmonumenten of beschermde gezichten in de directe omgeving aangetroffen — erfgoed vormt naar verwachting geen bezwaar.",
+        "Geen rijksmonumenten of beschermde dorps- of stadsgezichten in de omgeving aangetroffen — erfgoed is geen bezwaar.",
     }
   } catch (e) {
     console.error("[scoring] erfgoed error:", e)
@@ -1347,7 +1359,7 @@ export async function berekenScore(perceel: Perceel): Promise<{
   const erfgoed           = ok(settled[11], { score: 75, toelichting: "Erfgoedcheck tijdelijk niet beschikbaar" },                                        "erfgoed")
   const woonvisie         = ok(settled[12], { score: 52, toelichting: "Gemeentelijke woonvisiecheck tijdelijk niet beschikbaar" },                        "woonvisie")
 
-  const { naam: huidigeBestemming, reedsBouwgrond, isAgrarisch, planDatum } = bestemmingInfo
+  const { naam: huidigeBestemming, reedsBouwgrond, isAgrarisch, planDatum, planViewUrl } = bestemmingInfo
   const planleeftijd = berekenPlanleeftijdScore(planDatum)
 
   const netcongestie = getNetcongestieScore(perceel.gemeente ?? "", perceel.provincie ?? "");
@@ -1367,7 +1379,7 @@ export async function berekenScore(perceel: Perceel): Promise<{
       positief: reedsBouwgrond || isAgrarisch,
       bronnen: huidigeBestemming !== "onbekend" ? [{
         label: planDatum ? `${huidigeBestemming} (${planDatum.substring(0, 4)})` : huidigeBestemming,
-        url: "https://www.ruimtelijkeplannen.nl",
+        url: planViewUrl,
         type: "bestemmingsplan" as const,
       }] : undefined,
     },
@@ -1394,7 +1406,7 @@ export async function berekenScore(perceel: Perceel): Promise<{
       positief: provinciaalOmgevingsvisie.score > 70,
       bronnen: (() => {
         const label = provinciaalOmgevingsvisie.toelichting.split(" is ")[0]
-        return label ? [{ label, type: "bestemmingsplan" as const }] : undefined
+        return label ? [{ label, type: "bestemmingsplan" as const, url: provinciaalOmgevingsvisie.viewUrl }] : undefined
       })(),
     },
     {

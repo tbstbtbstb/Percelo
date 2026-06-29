@@ -16,7 +16,7 @@ export function PerceelKaart({ lat, lon, adres }: Props) {
     `https://www.google.com/maps/@${lat},${lon},18z/data=!3m1!1e3`;
 
   return (
-    <div style={{ position: "relative", width: "100%", aspectRatio: "8/3", minHeight: "200px", overflow: "hidden", backgroundColor: "#1a1a1a" }}>
+    <div style={{ position: "relative", width: "100%", aspectRatio: "8/3", minHeight: "200px", overflow: "hidden", backgroundColor: "#1a1a1a", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}>
       <iframe
         src={embedUrl}
         title={`Satellietkaart ${adres}`}
@@ -30,6 +30,9 @@ export function PerceelKaart({ lat, lon, adres }: Props) {
         referrerPolicy="no-referrer-when-downgrade"
         allowFullScreen
       />
+
+      {/* Dekt de "Openen in Maps" knop af in de iframe */}
+      <div style={{ position: "absolute", top: 0, right: 0, width: "160px", height: "40px", zIndex: 10 }} />
 
       {/* Adres label */}
       <div style={{

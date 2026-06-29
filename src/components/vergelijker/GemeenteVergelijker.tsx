@@ -27,8 +27,8 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 function ScoreBalk({ score, kleur }: { score: number; kleur: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <div style={{ flex: 1, height: "6px", backgroundColor: "var(--cds-layer-02, #e0e0e0)", borderRadius: "3px", overflow: "hidden", minWidth: "3rem" }}>
-        <div style={{ height: "100%", width: `${score}%`, backgroundColor: kleur, transition: "width 0.3s ease" }} />
+      <div style={{ flex: 1, height: "6px", backgroundColor: "#f4f4f4", borderRadius: "999px", overflow: "hidden", minWidth: "3rem" }}>
+        <div style={{ height: "100%", width: `${score}%`, backgroundColor: kleur, borderRadius: "999px", transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }} />
       </div>
       <span style={{ fontSize: "0.75rem", fontWeight: 600, color: kleur, flexShrink: 0, minWidth: "2rem", textAlign: "right" }}>
         {score}
@@ -67,7 +67,7 @@ type SortKey = "openheidsScore" | "woningdrukScore" | "provinciaalBeleidScore" |
 
 function DetailDrawer({ g }: { g: GemeenteProfiel }) {
   return (
-    <div style={{ padding: "1.25rem 1.5rem", backgroundColor: "#f4f4f4", borderTop: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
+    <div style={{ padding: "1.25rem 1.5rem", backgroundColor: "#f8f9fa", borderTop: "1px solid #e0e0e0" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
         {/* Omgevingsvisie */}
         <div style={{ flex: "2 1 18rem", minWidth: 0 }}>
@@ -159,12 +159,12 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
     fontWeight: 600,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    color: sortKey === k ? "var(--cds-interactive, #0f62fe)" : "var(--cds-text-secondary, #525252)",
+    color: sortKey === k ? "#0f62fe" : "#525252",
     cursor: "pointer",
     userSelect: "none",
     whiteSpace: "nowrap",
-    borderBottom: "2px solid var(--cds-border-subtle-00, #e0e0e0)",
-    backgroundColor: "var(--cds-layer-02, #e0e0e0)",
+    borderBottom: "2px solid #e0e0e0",
+    backgroundColor: "#f4f4f4",
     textAlign: "left",
     verticalAlign: "bottom",
   });
@@ -191,9 +191,10 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
             style={{
               width: "100%", paddingLeft: "2.25rem", paddingRight: "0.75rem",
               height: "2.25rem", fontSize: "0.875rem",
-              border: "1px solid var(--cds-border-strong-01, #8d8d8d)",
+              border: "1px solid #e0e0e0",
+              borderRadius: "4px",
               backgroundColor: "#ffffff",
-              color: "var(--cds-text-primary, #161616)",
+              color: "#161616",
               outline: "none",
             }}
           />
@@ -207,7 +208,8 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
               onClick={() => setProvincie("alle")}
               style={{
                 padding: "0.25rem 0.75rem", fontSize: "0.8125rem", cursor: "pointer",
-                border: "1px solid var(--cds-border-strong-01, #8d8d8d)",
+                border: "1px solid #e0e0e0",
+                borderRadius: "4px",
                 backgroundColor: provincie === "alle" ? "var(--cds-interactive, #0f62fe)" : "transparent",
                 color: provincie === "alle" ? "#fff" : "var(--cds-text-primary, #161616)",
               }}
@@ -220,7 +222,8 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
                 onClick={() => setProvincie(p)}
                 style={{
                   padding: "0.25rem 0.75rem", fontSize: "0.8125rem", cursor: "pointer",
-                  border: "1px solid var(--cds-border-strong-01, #8d8d8d)",
+                  border: "1px solid #e0e0e0",
+                borderRadius: "4px",
                   backgroundColor: provincie === p ? "var(--cds-interactive, #0f62fe)" : "transparent",
                   color: provincie === p ? "#fff" : "var(--cds-text-primary, #161616)",
                 }}
@@ -240,7 +243,8 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
               style={{
                 display: "flex", alignItems: "center", gap: "0.375rem",
                 padding: "0.25rem 0.875rem", fontSize: "0.8125rem", cursor: "pointer",
-                border: "1px solid var(--cds-border-strong-01, #8d8d8d)",
+                border: "1px solid #e0e0e0",
+                borderRadius: "4px",
                 backgroundColor: nabijActief ? "#defbe6" : "transparent",
                 color: nabijActief ? "#044317" : "var(--cds-text-primary, #161616)",
               }}
@@ -299,10 +303,9 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
                     key={g.naam}
                     onClick={() => setOpenRij(isOpen ? null : g.naam)}
                     style={{
-                      borderBottom: isOpen ? "none" : "1px solid var(--cds-border-subtle-00, #e0e0e0)",
-                      backgroundColor: isOpen ? "#edf5ff" : i % 2 === 0 ? "#ffffff" : "var(--cds-layer-01, #f4f4f4)",
+                      borderBottom: isOpen ? "none" : "1px solid #e0e0e0",
+                      backgroundColor: isOpen ? "#edf5ff" : i % 2 === 0 ? "#ffffff" : "#fafafa",
                       cursor: "pointer",
-                      borderLeft: isOpen ? "3px solid #0f62fe" : "3px solid transparent",
                     }}
                   >
                     <td style={{ padding: "0.75rem 1rem", fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", width: "2rem" }}>
@@ -357,7 +360,7 @@ export function GemeenteVergelijker({ perceelLat, perceelLon, perceelGemeente }:
                   </tr>
 
                   {isOpen && (
-                    <tr key={`${g.naam}-detail`} style={{ borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)", borderLeft: "3px solid #0f62fe" }}>
+                    <tr key={`${g.naam}-detail`} style={{ borderBottom: "1px solid #e0e0e0" }}>
                       <td colSpan={9} style={{ padding: 0 }}>
                         <DetailDrawer g={g} />
                       </td>

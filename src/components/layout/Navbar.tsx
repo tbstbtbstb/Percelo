@@ -13,7 +13,7 @@ import {
   HeaderGlobalAction,
 } from "@carbon/react";
 import {
-  UserAvatar, ChartLine, Map, Catalog, Compare,
+  UserAvatar, ChartLine, Catalog, Compare,
   Logout, Menu, Close, Search,
 } from "@carbon/icons-react";
 import { Logo } from "./Logo";
@@ -22,7 +22,7 @@ const NAV_LINKS = [
   { href: "/analyse",            label: "Analyseer perceel",  icon: ChartLine },
   { href: "/kansrijke-percelen", label: "Kansrijke percelen", icon: Search },
   { href: "/vergelijker",        label: "Vergelijker",        icon: Compare },
-  { href: "/kaart",              label: "Kaart",              icon: Map },
+
   { href: "/dashboard",          label: "Mijn percelen",      icon: Catalog },
 ];
 
@@ -49,7 +49,7 @@ export function Navbar() {
 
         {/* Desktop navigatie (verborgen onder 1056px via Carbon CSS) */}
         <HeaderNavigation aria-label="Navigatie">
-          {NAV_LINKS.slice(0, 4).map(({ href, label }) => (
+          {NAV_LINKS.map(({ href, label }) => (
             <HeaderMenuItem key={href} href={href} isCurrentPage={pathname === href}>
               {label}
             </HeaderMenuItem>

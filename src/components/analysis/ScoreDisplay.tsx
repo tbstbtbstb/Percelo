@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tag, ProgressBar, Tile } from "@carbon/react";
+import { Tag } from "@carbon/react";
 import { CheckmarkFilled, MisuseOutline, WarningAltFilled } from "@carbon/icons-react";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -51,27 +51,177 @@ function kortNaam(naam: string) {
   return KORTE_NAAM[naam] ?? (naam.length > 16 ? naam.slice(0, 14) + "…" : naam);
 }
 
+function formatToelichting(tekst: string) {
+  return tekst.replace(/ — ([a-z])/g, (_, c) => `. ${c.toUpperCase()}`).replace(/ — /g, ". ");
+}
+
+const PRECEDENT_RE = /^(\d+ bestemmingswijziging(?:en)? vastgesteld)/;
+
+function renderToelichting(tekst: string, onPrecedentClick?: () => void) {
+  const formatted = formatToelichting(tekst);
+  if (!onPrecedentClick) return formatted;
+  const match = formatted.match(PRECEDENT_RE);
+  if (!match) return formatted;
+  const [clickable] = match;
+  const rest = formatted.slice(clickable.length);
+  return (
+    <>
+      <button
+        onClick={onPrecedentClick}
+        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline", color: "inherit", fontSize: "inherit", fontFamily: "inherit", lineHeight: "inherit" }}
+      >
+        {clickable}
+      </button>
+      {rest}
+    </>
+  );
+}
+
 function factorKleur(score: number) {
   if (score >= 70) return "#24a148";
   if (score >= 40) return "#b28600";
   return "#da1e28";
 }
 
-interface Props {
+function BronChips({ bronnen }: { bronnen: NonNullable<ScoreFactor["bronnen"]> }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem", marginTop: "0.625rem" }}>
+      {bronnen.map((bron, i) => {
+        const typeLabel = BRON_TYPE_LABEL[bron.type] ?? bron.type;
+        const gemeenschappelijk: React.CSSProperties = {
+          display: "inline-flex", alignItems: "center", gap: "0.3rem",
+          padding: "0.25rem 0.625rem", borderRadius: "999px",
+          fontSize: "0.6875rem", fontWeight: 500, lineHeight: 1.4,
+          textDecoration: "none", border: "1px solid",
+        };
+        const inner = (
+          <>
+            <span style={{ fontWeight: 700, opacity: 0.7 }}>{typeLabel}</span>
+            <span>{bron.label}</span>
+          </>
+        );
+        if (bron.url) {
+          return (
+            <a key={i} href={bron.url} target="_blank" rel="noopener noreferrer"
+              style={{ ...gemeenschappelijk, backgroundColor: "#edf5ff", color: "#0043ce", borderColor: "#a6c8ff" }}>
+              {inner}
+            </a>
+          );
+        }
+        return (
+          <span key={i} style={{ ...gemeenschappelijk, backgroundColor: "#f4f4f4", color: "#525252", borderColor: "#e0e0e0" }}>
+            {inner}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function ScoreGauge({ score, kleur }: { score: number; kleur: string }) {
+  const r = 52;
+  const cx = 70;
+  const cy = 70;
+  const omtrek = 2 * Math.PI * r;
+  const gevuld = (score / 100) * omtrek;
+
+  return (
+    <svg width="140" height="140" viewBox="0 0 140 140" style={{ flexShrink: 0 }}>
+      {/* Achtergrondring */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#ffffff" strokeWidth="10" />
+      {/* Gekleurde boog */}
+      <circle
+        cx={cx} cy={cy} r={r}
+        fill="none"
+        stroke={kleur}
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeDasharray={`${gevuld} ${omtrek - gevuld}`}
+        transform={`rotate(-90 ${cx} ${cy})`}
+        style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.4, 0, 0.2, 1)" }}
+      />
+      {/* Score getal */}
+      <text x={cx} y={cy - 8} textAnchor="middle" dominantBaseline="middle"
+        fontSize="30" fontWeight="800" fill={kleur} fontFamily="system-ui, sans-serif">
+        {score}
+      </text>
+      {/* /100 label */}
+      <text x={cx} y={cy + 18} textAnchor="middle"
+        fontSize="12" fill="#8d8d8d" fontFamily="system-ui, sans-serif">
+        /100
+      </text>
+    </svg>
+  );
+}
+
+interface HoofdProps {
+  score: number;
+  scoreKlasse: ScoreKlasse;
+  hardBlockers?: HardBlocker[];
+}
+
+interface FactorenProps {
   score: number;
   scoreKlasse: ScoreKlasse;
   factoren: ScoreFactor[];
   precedentPlannen?: PrecedentPlan[];
   gemeente?: string;
-  hardBlockers?: HardBlocker[];
 }
 
-export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = [], gemeente, hardBlockers = [] }: Props) {
+export function ScoreHoofd({ score, scoreKlasse, hardBlockers = [] }: HoofdProps) {
+  const cfg = SCORE_CONFIG[scoreKlasse];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {hardBlockers.length > 0 && (
+        <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+          <div style={{ height: "4px", backgroundColor: "#da1e28" }} />
+          <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, fontSize: "0.875rem", color: "#da1e28" }}>
+              <MisuseOutline size={18} />
+              {hardBlockers.length === 1 ? "Hard blocker aanwezig" : `${hardBlockers.length} hard blockers aanwezig`}
+            </div>
+            {hardBlockers.map((b) => (
+              <div key={b.naam}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#161616", marginBottom: "0.2rem" }}>{b.naam}</div>
+                <div style={{ fontSize: "0.75rem", color: "#525252", lineHeight: 1.4 }}>{b.toelichting}</div>
+                <div style={{ fontSize: "0.75rem", color: "#da1e28", marginTop: "0.2rem", fontStyle: "italic" }}>
+                  Totaalscore begrensd op {b.maxTotaal}/100 — overige factoren beïnvloeden de uitkomst niet.
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ backgroundColor: cfg.achtergrond, borderRadius: "12px", boxShadow: `0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px ${cfg.kleur}30`, overflow: "hidden" }}>
+        <div style={{ padding: "1.5rem", display: "flex", alignItems: "center", gap: "1.75rem", flexWrap: "wrap" }}>
+          <ScoreGauge score={score} kleur={cfg.kleur} />
+          <div style={{ flex: 1, minWidth: "10rem" }}>
+            <p style={{ fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#8d8d8d", marginBottom: "0.75rem" }}>
+              <Uitleg term="Slagingskans" uitleg="Hoe groot de kans is dat uw aanvraag voor bestemmingswijziging wordt goedgekeurd, berekend op basis van locatiedata, gemeentelijk beleid en historische vergelijkingen.">
+                Slagingskans
+              </Uitleg>
+            </p>
+            <Tag type={cfg.tagType} size="lg" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem", marginBottom: "0.5rem" }}>
+              {cfg.label}
+            </Tag>
+            {hardBlockers.length > 0 && (
+              <p style={{ fontSize: "0.6875rem", color: "#da1e28", fontWeight: 600, marginTop: "0.5rem" }}>
+                Geblokkeerd op max {Math.max(...hardBlockers.map(b => b.maxTotaal))}/100
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], gemeente }: FactorenProps) {
   const cfg = SCORE_CONFIG[scoreKlasse];
   const [modalOpen, setModalOpen] = useState(false);
-  const [openBronnen, setOpenBronnen] = useState<string | null>(null);
   const [weergave, setWeergave] = useState<"lijst" | "radar">("lijst");
-
   const [geselecteerdIndex, setGeselecteerdIndex] = useState(0);
 
   const radarData = factoren.map((f) => ({
@@ -120,67 +270,14 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-      {/* Hard blocker banner */}
-      {hardBlockers.length > 0 && (
-        <div style={{
-          backgroundColor: "#fff1f1",
-          border: "1px solid #da1e28",
-          borderLeft: "4px solid #da1e28",
-          borderRadius: "2px",
-          padding: "0.875rem 1rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, fontSize: "0.875rem", color: "#da1e28" }}>
-            <MisuseOutline size={18} />
-            {hardBlockers.length === 1 ? "Hard blocker aanwezig" : `${hardBlockers.length} hard blockers aanwezig`}
-          </div>
-          {hardBlockers.map((b) => (
-            <div key={b.naam}>
-              <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#161616", marginBottom: "0.2rem" }}>{b.naam}</div>
-              <div style={{ fontSize: "0.75rem", color: "#525252", lineHeight: 1.4 }}>{b.toelichting}</div>
-              <div style={{ fontSize: "0.75rem", color: "#da1e28", marginTop: "0.2rem", fontStyle: "italic" }}>
-                Totaalscore begrensd op {b.maxTotaal}/100 — overige factoren beïnvloeden de uitkomst niet.
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Hoofdscore */}
-      <Tile style={{ backgroundColor: cfg.achtergrond, padding: "1.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginBottom: "0.25rem", fontWeight: 400 }}>
-              <Uitleg term="Slagingskans" uitleg="Hoe groot de kans is dat uw aanvraag voor bestemmingswijziging wordt goedgekeurd, berekend op basis van locatiedata, gemeentelijk beleid en historische vergelijkingen.">
-                Slagingskans
-              </Uitleg>
-            </p>
-            <p style={{ fontSize: "3rem", fontWeight: 700, color: cfg.kleur, lineHeight: 1, fontFamily: "var(--cds-code-01-font-family, monospace)" }}>
-              {score}<span style={{ fontSize: "1.25rem" }}>/100</span>
-            </p>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.375rem" }}>
-            <Tag type={cfg.tagType} size="lg" style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}>
-              {cfg.label}
-            </Tag>
-            {hardBlockers.length > 0 && (
-              <span style={{ fontSize: "0.6875rem", color: "#da1e28", fontWeight: 600 }}>
-                geblokkeerd op max {Math.max(...hardBlockers.map(b => b.maxTotaal))}/100
-              </span>
-            )}
-          </div>
-        </div>
-        <div style={{ "--cds-interactive": cfg.kleur } as React.CSSProperties}>
-          <ProgressBar value={score} max={100} label="" hideLabel size="small" status="active" />
-        </div>
-      </Tile>
-
+    <>
       {/* Scorefactoren */}
-      <Tile style={{ padding: "1.25rem" }}>
+      <div style={{
+        backgroundColor: "#ffffff",
+        borderRadius: "12px",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+        padding: "1.25rem",
+      }}>
         {/* Header met toggle */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", gap: "0.75rem", flexWrap: "wrap" }}>
           <h3 style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--cds-text-primary, #161616)", margin: 0 }}>
@@ -245,12 +342,11 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
               const factor = factoren[geselecteerdIndex];
               if (!factor) return null;
               const heeftBronnen = (factor.bronnen?.length ?? 0) > 0;
-              const bronnenOpen = openBronnen === factor.naam;
               return (
                 <div style={{ marginTop: "1rem", padding: "0.875rem 1rem", backgroundColor: "#f4f4f4", borderLeft: `3px solid ${factorKleur(factor.score)}` }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.375rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap" }}>
-                      <span style={{ marginTop: "0.1rem", flexShrink: 0 }}>
+                      <span style={{ marginTop: "0.0625rem", flexShrink: 0 }}>
                         {factor.positief
                           ? <CheckmarkFilled size={16} style={{ color: "#24a148" }} />
                           : factor.score >= 40
@@ -270,51 +366,20 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
                     </span>
                   </div>
                   <p style={{ fontSize: "0.75rem", color: "#525252", lineHeight: 1.5, margin: 0 }}>
-                    {factor.toelichting}
+                    {renderToelichting(factor.toelichting)}
                   </p>
-                  {factor.naam === "Historische precedenten" && precedentPlannen.length > 0 && (
-                    <button
-                      onClick={() => setModalOpen(true)}
-                      style={{ fontSize: "0.75rem", color: "var(--cds-link-primary, #0f62fe)", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: "0.375rem", textDecoration: "underline" }}
-                    >
-                      Bekijk {precedentPlannen.length} vastgestelde plan{precedentPlannen.length !== 1 ? "nen" : ""} →
-                    </button>
-                  )}
-                  {heeftBronnen && (
-                    <div style={{ marginTop: "0.5rem" }}>
-                      <button
-                        onClick={() => setOpenBronnen(bronnenOpen ? null : factor.naam)}
-                        style={{ fontSize: "0.6875rem", color: "var(--cds-link-primary, #0f62fe)", background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: "0.25rem" }}
-                      >
-                        Bronnen ({factor.bronnen!.length}) {bronnenOpen ? "▲" : "▾"}
-                      </button>
-                      {bronnenOpen && (
-                        <div style={{ marginTop: "0.375rem", paddingLeft: "0.625rem", borderLeft: "2px solid #e0e0e0", display: "flex", flexDirection: "column", gap: "0.375rem" }}>
-                          {factor.bronnen!.map((bron, i) => (
-                            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "0.375rem" }}>
-                              <span style={{ fontSize: "0.5625rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "#525252", backgroundColor: "#e8e8e8", padding: "0.1rem 0.3rem", borderRadius: "2px", flexShrink: 0, marginTop: "0.15rem", lineHeight: 1.4 }}>
-                                {BRON_TYPE_LABEL[bron.type] ?? bron.type}
-                              </span>
-                              <div style={{ flex: 1 }}>
-                                {bron.url ? (
-                                  <a href={bron.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.6875rem", color: "var(--cds-link-primary, #0f62fe)", textDecoration: "underline", lineHeight: 1.4 }}>
-                                    {bron.label}
-                                  </a>
-                                ) : (
-                                  <span style={{ fontSize: "0.6875rem", color: "#525252", lineHeight: 1.4 }}>{bron.label}</span>
-                                )}
-                                {bron.citaat && (
-                                  <p style={{ fontSize: "0.625rem", color: "#8d8d8d", margin: "0.15rem 0 0", lineHeight: 1.35, fontStyle: "italic" }}>
-                                    &ldquo;{bron.citaat}&rdquo;
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {factor.naam === "Historische precedenten" && precedentPlannen.length > 0
+                    ? (
+                      <div style={{ marginTop: "0.625rem" }}>
+                        <button
+                          onClick={() => setModalOpen(true)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.625rem", borderRadius: "999px", fontSize: "0.6875rem", fontWeight: 500, lineHeight: 1.4, cursor: "pointer", backgroundColor: "#edf5ff", color: "#0043ce", borderColor: "#a6c8ff", border: "1px solid #a6c8ff" }}
+                        >
+                          Bekijk bestemmingswijzigingen
+                        </button>
+                      </div>
+                    )
+                    : heeftBronnen && <BronChips bronnen={factor.bronnen!} />}
                 </div>
               );
             })()}
@@ -323,15 +388,14 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
 
         {/* Lijstweergave */}
         {weergave === "lijst" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
             {factoren.map((factor) => {
               const heeftBronnen = (factor.bronnen?.length ?? 0) > 0;
-              const bronnenOpen = openBronnen === factor.naam;
 
               return (
                 <div key={factor.naam}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
-                    <span style={{ marginTop: "0.125rem", flexShrink: 0 }}>
+                    <span style={{ marginTop: "0.0625rem", flexShrink: 0 }}>
                       {factor.positief
                         ? <CheckmarkFilled size={16} style={{ color: "#24a148" }} />
                         : factor.score >= 40
@@ -340,100 +404,45 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
                       }
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{factor.naam}</span>
-                          {factor.isHardBlocker && (
-                            <span style={{
-                              fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.04em",
-                              color: "#da1e28", backgroundColor: "#fff1f1",
-                              border: "1px solid #da1e28", borderRadius: "2px",
-                              padding: "0.1rem 0.35rem", lineHeight: 1.4, flexShrink: 0,
-                            }}>
-                              BLOCKER
-                            </span>
-                          )}
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{factor.naam}</span>
+                        {factor.isHardBlocker && (
+                          <span style={{
+                            fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.04em",
+                            color: "#da1e28", backgroundColor: "#fff1f1",
+                            border: "1px solid #da1e28", borderRadius: "2px",
+                            padding: "0.1rem 0.35rem", lineHeight: 1.4, flexShrink: 0,
+                          }}>
+                            BLOCKER
+                          </span>
+                        )}
+                      </div>
+
+                      <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.25rem", lineHeight: 1.5 }}>
+                        {renderToelichting(factor.toelichting)}
+                      </p>
+
+                      <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.625rem" }}>
+                        <div style={{ flex: 1, height: "5px", backgroundColor: "#f4f4f4", borderRadius: "999px", overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${factor.score}%`, backgroundColor: factorKleur(factor.score), borderRadius: "999px", transition: "width 0.5s cubic-bezier(0.4, 0, 0.2, 1)" }} />
                         </div>
-                        <span style={{ fontSize: "0.75rem", flexShrink: 0, fontWeight: 600, color: factorKleur(factor.score) }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: factorKleur(factor.score), flexShrink: 0 }}>
                           {factor.score}/100
                         </span>
                       </div>
 
-                      <p style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.25rem", lineHeight: 1.4 }}>
-                        {factor.toelichting}
-                      </p>
-
-                      {factor.naam === "Historische precedenten" && precedentPlannen.length > 0 && (
-                        <button
-                          onClick={() => setModalOpen(true)}
-                          style={{ fontSize: "0.75rem", color: "var(--cds-link-primary, #0f62fe)", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: "0.25rem", textDecoration: "underline" }}
-                        >
-                          Bekijk {precedentPlannen.length} vastgestelde plan{precedentPlannen.length !== 1 ? "nen" : ""} →
-                        </button>
-                      )}
-
-                      <div style={{ marginTop: "0.375rem", height: "3px", backgroundColor: "var(--cds-layer-02, #e0e0e0)", borderRadius: "2px", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${factor.score}%`, backgroundColor: factorKleur(factor.score), borderRadius: "2px", transition: "width 0.3s ease" }} />
-                      </div>
-
-                      {heeftBronnen && (
-                        <div style={{ marginTop: "0.375rem" }}>
-                          <button
-                            onClick={() => setOpenBronnen(bronnenOpen ? null : factor.naam)}
-                            style={{
-                              fontSize: "0.6875rem",
-                              color: "var(--cds-link-primary, #0f62fe)",
-                              background: "none", border: "none", cursor: "pointer",
-                              padding: 0,
-                              display: "flex", alignItems: "center", gap: "0.25rem",
-                            }}
-                          >
-                            Bronnen ({factor.bronnen!.length}) {bronnenOpen ? "▲" : "▾"}
-                          </button>
-
-                          {bronnenOpen && (
-                            <div style={{
-                              marginTop: "0.375rem",
-                              paddingLeft: "0.625rem",
-                              borderLeft: "2px solid var(--cds-border-subtle-00, #e0e0e0)",
-                              display: "flex", flexDirection: "column", gap: "0.375rem",
-                            }}>
-                              {factor.bronnen!.map((bron, i) => (
-                                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "0.375rem" }}>
-                                  <span style={{
-                                    fontSize: "0.5625rem", fontWeight: 700,
-                                    textTransform: "uppercase", letterSpacing: "0.04em",
-                                    color: "#525252", backgroundColor: "#e8e8e8",
-                                    padding: "0.1rem 0.3rem", borderRadius: "2px",
-                                    flexShrink: 0, marginTop: "0.15rem", lineHeight: 1.4,
-                                  }}>
-                                    {BRON_TYPE_LABEL[bron.type] ?? bron.type}
-                                  </span>
-                                  <div style={{ flex: 1 }}>
-                                    {bron.url ? (
-                                      <a
-                                        href={bron.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ fontSize: "0.6875rem", color: "var(--cds-link-primary, #0f62fe)", textDecoration: "underline", lineHeight: 1.4 }}
-                                      >
-                                        {bron.label}
-                                      </a>
-                                    ) : (
-                                      <span style={{ fontSize: "0.6875rem", color: "#525252", lineHeight: 1.4 }}>{bron.label}</span>
-                                    )}
-                                    {bron.citaat && (
-                                      <p style={{ fontSize: "0.625rem", color: "#8d8d8d", margin: "0.15rem 0 0", lineHeight: 1.35, fontStyle: "italic" }}>
-                                        &ldquo;{bron.citaat}&rdquo;
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {factor.naam === "Historische precedenten" && precedentPlannen.length > 0
+                        ? (
+                          <div style={{ marginTop: "0.625rem" }}>
+                            <button
+                              onClick={() => setModalOpen(true)}
+                              style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.625rem", borderRadius: "999px", fontSize: "0.6875rem", fontWeight: 500, lineHeight: 1.4, cursor: "pointer", backgroundColor: "#edf5ff", color: "#0043ce", borderColor: "#a6c8ff", border: "1px solid #a6c8ff" }}
+                            >
+                              Bekijk bestemmingswijzigingen
+                            </button>
+                          </div>
+                        )
+                        : heeftBronnen && <BronChips bronnen={factor.bronnen!} />}
                     </div>
                   </div>
                 </div>
@@ -441,7 +450,7 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
             })}
           </div>
         )}
-      </Tile>
+      </div>
 
       <PrecedentenModal
         open={modalOpen}
@@ -449,6 +458,6 @@ export function ScoreDisplay({ score, scoreKlasse, factoren, precedentPlannen = 
         plannen={precedentPlannen}
         gemeente={gemeente}
       />
-    </div>
+    </>
   );
 }

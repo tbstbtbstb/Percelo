@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Tag } from "@carbon/react";
 import { Close, Location } from "@carbon/icons-react";
 import type { PrecedentPlan } from "@/types";
@@ -56,11 +56,11 @@ export function PrecedentenModal({ open, onClose, plannen, gemeente }: Props) {
       {/* Panel */}
       <div style={{
         position: "relative", zIndex: 1,
-        backgroundColor: "var(--cds-layer-01, #f4f4f4)",
+        backgroundColor: "#ffffff",
         width: "100%", maxWidth: "32rem",
         maxHeight: "80vh", display: "flex", flexDirection: "column",
-        border: "1px solid var(--cds-border-subtle-00, #e0e0e0)",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+        borderRadius: "12px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)",
       }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem", padding: "1.25rem 1.25rem 0.75rem", borderBottom: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
@@ -85,7 +85,7 @@ export function PrecedentenModal({ open, onClose, plannen, gemeente }: Props) {
         </div>
 
         {/* Content */}
-        <div style={{ overflowY: "auto", flex: 1, padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ overflowY: "auto", flex: 1, padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: "1rem", backgroundColor: "#f9f9f9", borderRadius: "0 0 12px 12px" }}>
           {plannen.length === 0 ? (
             <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)", textAlign: "center", padding: "2rem 0" }}>
               Geen vastgestelde wijzigingsplannen gevonden in de regio.
@@ -97,7 +97,7 @@ export function PrecedentenModal({ open, onClose, plannen, gemeente }: Props) {
                   <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#24a148", marginBottom: "0.5rem" }}>
                     Woningbouw-precedenten ({wonenPlannen.length})
                   </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                     {wonenPlannen.map((p, i) => <PlanRij key={i} plan={p} />)}
                   </div>
                 </div>
@@ -107,7 +107,7 @@ export function PrecedentenModal({ open, onClose, plannen, gemeente }: Props) {
                   <p style={{ fontSize: "0.6875rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--cds-text-secondary, #525252)", marginBottom: "0.5rem" }}>
                     Overige wijzigingen ({overigePlannen.length})
                   </p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                     {overigePlannen.map((p, i) => <PlanRij key={i} plan={p} />)}
                   </div>
                 </div>
@@ -123,12 +123,26 @@ export function PrecedentenModal({ open, onClose, plannen, gemeente }: Props) {
 function PlanRij({ plan }: { plan: PrecedentPlan }) {
   const datum = formatDatum(plan.datum);
   const typeLabel = TYPE_LABEL[plan.type] ?? plan.type;
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <div style={{ padding: "0.5rem 0.75rem", backgroundColor: "var(--cds-layer-02, #e0e0e0)", border: "1px solid var(--cds-border-subtle-00, #e0e0e0)" }}>
+    <div style={{ padding: "0.625rem 0.875rem", backgroundColor: "#ffffff", borderRadius: "8px", boxShadow: "0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05)" }}>
       <p style={{ fontWeight: 500, fontSize: "0.8125rem", lineHeight: 1.4, color: "var(--cds-text-primary, #161616)" }}>{plan.naam}</p>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem" }}>
-        <Tag type="blue" size="sm">{typeLabel}</Tag>
+        {plan.identificatie ? (
+          <a
+            href={`https://omgevingswet.overheid.nl/regels-op-de-kaart/document?documentID=${plan.identificatie}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{ display: "inline-block", textDecoration: "none", filter: hovered ? "brightness(0.82)" : "none", transition: "filter 0.15s ease" }}
+          >
+            <Tag type="blue" size="sm">{typeLabel}</Tag>
+          </a>
+        ) : (
+          <Tag type="blue" size="sm">{typeLabel}</Tag>
+        )}
         {datum && <span style={{ fontSize: "0.75rem", color: "var(--cds-text-secondary, #525252)" }}>{datum}</span>}
       </div>
     </div>
