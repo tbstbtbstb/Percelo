@@ -213,7 +213,7 @@ interface PrecedentenResultaat {
 
 async function checkHistorischePrecedenten(lat: number, lon: number, gemeente: string): Promise<PrecedentenResultaat> {
   const apiKey = process.env.RUIMTELIJKEPLANNEN_API_KEY
-  if (!apiKey) return { score: 55, aantalPrecedenten: 0, toelichting: "Precedentendata niet beschikbaar", plannen: [] }
+  if (!apiKey) return { score: 40, aantalPrecedenten: 0, toelichting: "Precedentendata niet beschikbaar", plannen: [] }
 
   const headers = {
     "Content-Type": "application/json",
@@ -250,7 +250,7 @@ async function checkHistorischePrecedenten(lat: number, lon: number, gemeente: s
     )
     if (!res.ok) {
       console.error(`[scoring] precedenten/_zoek ${res.status}:`, await res.text().catch(() => ""))
-      return { score: 55, aantalPrecedenten: 0, toelichting: "Precedentendata tijdelijk niet beschikbaar", plannen: [] }
+      return { score: 40, aantalPrecedenten: 0, toelichting: "Precedentendata tijdelijk niet beschikbaar", plannen: [] }
     }
 
     const data = await res.json()
@@ -317,7 +317,7 @@ async function checkHistorischePrecedenten(lat: number, lon: number, gemeente: s
     return { score, aantalPrecedenten: totaal, toelichting, plannen: plannenLijst }
   } catch (e) {
     console.error("[scoring] precedenten error:", String(e))
-    return { score: 55, aantalPrecedenten: 0, toelichting: "Precedentendata tijdelijk niet beschikbaar", plannen: [] }
+    return { score: 40, aantalPrecedenten: 0, toelichting: "Precedentendata tijdelijk niet beschikbaar", plannen: [] }
   }
 }
 
@@ -327,7 +327,7 @@ async function checkNatura2000Nabijheid(lat: number, lon: number): Promise<{
   score: number; toelichting: string
 }> {
   const fallback = {
-    score: 50,
+    score: 42,
     toelichting: "Natura2000-nabijheid kon niet worden bepaald — raadpleeg voorzichtheidshalve een omgevingsadviseur over stikstofrisico",
   }
 
@@ -383,7 +383,7 @@ async function checkNatura2000Nabijheid(lat: number, lon: number): Promise<{
 async function checkNNNGNN(lat: number, lon: number): Promise<{
   score: number; binnenNNN: boolean; toelichting: string
 }> {
-  const fallback = { score: 65, binnenNNN: false, toelichting: "NNN-status kon niet worden bepaald" }
+  const fallback = { score: 40, binnenNNN: false, toelichting: "NNN-status kon niet worden bepaald" }
   try {
     // Kleine bbox rondom het punt (~100m), WMS GetFeatureInfo op centerpixel
     const d = 0.001
@@ -428,7 +428,7 @@ async function checkNNNGNN(lat: number, lon: number): Promise<{
 async function checkWatertoets(lat: number, lon: number): Promise<{
   score: number; nabijWater: boolean; toelichting: string
 }> {
-  const fallback = { score: 65, nabijWater: false, toelichting: "Watertoets-status kon niet worden bepaald" }
+  const fallback = { score: 42, nabijWater: false, toelichting: "Watertoets-status kon niet worden bepaald" }
   try {
     // ~100m bbox rondom punt
     const dLon = 0.0013
@@ -480,11 +480,11 @@ async function checkWatertoets(lat: number, lon: number): Promise<{
 // Oudere plannen zijn politiek makkelijker te herzien dan recent vastgestelde plannen.
 function berekenPlanleeftijdScore(planDatum: string | undefined): { score: number; toelichting: string } {
   if (!planDatum) {
-    return { score: 55, toelichting: "Vaststellingsdatum bestemmingsplan onbekend" }
+    return { score: 42, toelichting: "Vaststellingsdatum bestemmingsplan onbekend" }
   }
   const datum = new Date(planDatum)
   if (isNaN(datum.getTime())) {
-    return { score: 55, toelichting: "Vaststellingsdatum bestemmingsplan onbekend" }
+    return { score: 42, toelichting: "Vaststellingsdatum bestemmingsplan onbekend" }
   }
   const jaren = (Date.now() - datum.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
   const jaar = datum.getFullYear()
@@ -520,7 +520,7 @@ async function checkWoningbouwtekort(gemeente: string): Promise<{
   score: number; toelichting: string
 }> {
   const fallback = {
-    score: 55,
+    score: 42,
     toelichting: `Woningmarktdruk voor ${gemeente} kon niet worden bepaald via CBS`,
   }
   if (!gemeente) return fallback
@@ -544,7 +544,7 @@ async function checkWoningbouwtekort(gemeente: string): Promise<{
 
     if (!gmCode) {
       return {
-        score: 55,
+        score: 42,
         toelichting: `Gemeente ${gemeente} niet gevonden in CBS-register — landelijk gemiddeld niveau aangehouden`,
       }
     }
@@ -794,7 +794,7 @@ async function checkLadderBSG(lat: number, lon: number): Promise<{
       `&request=GetFeature&typeName=bag:verblijfsobject&outputFormat=json&count=30` +
       `&CQL_FILTER=DWITHIN(geometrie,POINT(${lon}%20${lat}),300,meters)`
     const res = await fetch(url, { signal: AbortSignal.timeout(7000) })
-    if (!res.ok) return { score: 50, binnenBSG: null, toelichting: "BSG-status kon niet worden bepaald" }
+    if (!res.ok) return { score: 42, binnenBSG: null, toelichting: "BSG-status kon niet worden bepaald" }
     const data = await res.json()
     const aantalObjecten: number = (data.features ?? []).length
     const binnenBSG = aantalObjecten >= 10
@@ -813,7 +813,7 @@ async function checkLadderBSG(lat: number, lon: number): Promise<{
         : `Perceel ligt op de rand van de bebouwde kom (${aantalObjecten} panden in 300m). U moet onderbouwen waarom hier gebouwd wordt en niet op een locatie dichter bij de kern.`,
     }
   } catch {
-    return { score: 50, binnenBSG: null, toelichting: "BSG-status kon niet worden bepaald" }
+    return { score: 42, binnenBSG: null, toelichting: "BSG-status kon niet worden bepaald" }
   }
 }
 
@@ -956,7 +956,7 @@ function getNetcongestieScore(gemeente: string, provincie: string): { score: num
 async function checkGeluidshinder(lat: number, lon: number): Promise<{
   score: number; toelichting: string
 }> {
-  const fallback = { score: 62, toelichting: "Geluidsbelasting kon niet worden bepaald" }
+  const fallback = { score: 42, toelichting: "Geluidsbelasting kon niet worden bepaald" }
   try {
     // ~350m bbox (snelwegzone = 300m, marge voor CRS-afronding)
     const dLon = 0.005   // ≈350m bij 52°N
@@ -1034,7 +1034,7 @@ async function checkGeluidshinder(lat: number, lon: number): Promise<{
 async function checkErfgoed(lat: number, lon: number): Promise<{
   score: number; toelichting: string
 }> {
-  const fallback = { score: 75, toelichting: "Erfgoedstatus kon niet worden bepaald" }
+  const fallback = { score: 55, toelichting: "Erfgoedstatus kon niet worden bepaald" }
   const WFS = "https://service.pdok.nl/rce/erfgoed/wfs/v1_0?service=WFS&version=2.0.0&request=GetFeature&outputFormat=json"
 
   try {
@@ -1097,7 +1097,7 @@ async function checkGemeentelijkeWoonvisie(lat: number, lon: number, gemeente: s
   score: number; toelichting: string
 }> {
   const fallback = {
-    score: 52,
+    score: 42,
     toelichting: `Woningbouwproductie van ${gemeente} kon niet worden bepaald — bestuurlijk draagvlak onbekend`,
   }
   if (!gemeente) return fallback
