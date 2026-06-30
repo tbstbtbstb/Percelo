@@ -19,6 +19,7 @@ const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
   ),
 });
 
+const IS_WOON_RE = /^wonen/i;
 const DRAWER_WIDTH = 440;
 const DRAWER_MARGIN = 20; // 1.25rem — ruimte tussen kaartrand en panel
 
@@ -62,6 +63,7 @@ export function PercelenKaartView() {
   const gefilterd = useMemo(() =>
     ALLE_PERCELEN
       .filter((p) =>
+        !IS_WOON_RE.test(p.bestemming) &&
         (!filterProvincie || p.provincie === filterProvincie) &&
         p.slagingskans >= filterMinSlagingskans &&
         p.margeMin >= filterMinMarge * 1000

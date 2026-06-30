@@ -212,8 +212,14 @@ for (let i = 0; i < resterend.length; i += 5) {
     continue;
   }
 
+  const IS_WOON_RE = /^wonen/i;
+
   for (const r of resultaten) {
     if (!r.ok || r.totaalScore < 50) {
+      aantalOvergeslagen++;
+      continue;
+    }
+    if (IS_WOON_RE.test(r.huidigeBestemming ?? "")) {
       aantalOvergeslagen++;
       continue;
     }
