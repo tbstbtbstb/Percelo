@@ -41,7 +41,7 @@ function chipHtml(p: KansrijkPerceel, geselecteerd: boolean): string {
 export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
-  const clusterRef = useRef<import("leaflet.markercluster").MarkerClusterGroup | null>(null);
+  const clusterRef = useRef<import("leaflet").MarkerClusterGroup | null>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const markersRef = useRef<Map<string, import("leaflet").Marker>>(new Map());
   const onSelectRef = useRef(onSelect);
@@ -74,11 +74,11 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
       // Cluster-groep met aangepast cluster-icoon
-      const cluster = (L as unknown as { markerClusterGroup: (opts: unknown) => import("leaflet.markercluster").MarkerClusterGroup }).markerClusterGroup({
+      const cluster = (L as unknown as { markerClusterGroup: (opts: unknown) => import("leaflet").MarkerClusterGroup }).markerClusterGroup({
         maxClusterRadius: 60,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
-        iconCreateFunction: (c: import("leaflet.markercluster").MarkerCluster) => {
+        iconCreateFunction: (c: import("leaflet").MarkerCluster) => {
           const markers = c.getAllChildMarkers();
           const scores = markers.map((m) => {
             const p = percelen.find((x) => x.id === (m as unknown as { _perceelId: string })._perceelId);
