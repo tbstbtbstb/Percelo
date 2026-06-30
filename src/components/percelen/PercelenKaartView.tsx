@@ -21,7 +21,6 @@ const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
 
 const DRAWER_WIDTH = 440;
 const DRAWER_MARGIN = 20; // 1.25rem — ruimte tussen kaartrand en panel
-const IS_AGRARISCH_RE = /agrarisch|landbouw|akkerbouw|tuinbouw|glastuinbouw|veeteelt|weidegrond|polder|buitengebied/i;
 
 function eur(n: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -63,7 +62,6 @@ export function PercelenKaartView() {
   const gefilterd = useMemo(() =>
     ALLE_PERCELEN
       .filter((p) =>
-        IS_AGRARISCH_RE.test(p.bestemming) &&
         (!filterProvincie || p.provincie === filterProvincie) &&
         p.slagingskans >= filterMinSlagingskans &&
         p.margeMin >= filterMinMarge * 1000
