@@ -203,8 +203,8 @@ export function KansrijkePercelenLijst() {
                     </span>
                   </td>
                   <td style={tdStyle}>
-                    <span style={{ fontWeight: 700, color: p.roiPct >= 200 ? "#24a148" : p.roiPct >= 100 ? "#b28600" : "#525252" }}>
-                      {p.roiPct}%
+                    <span style={{ fontWeight: 700, color: Math.round(p.margeMax / p.geschatteAankoopprijs * 100) >= 200 ? "#24a148" : Math.round(p.margeMax / p.geschatteAankoopprijs * 100) >= 100 ? "#b28600" : "#525252" }}>
+                      {Math.round(p.margeMax / p.geschatteAankoopprijs * 100)}%
                     </span>
                   </td>
                   <td style={tdStyle}>

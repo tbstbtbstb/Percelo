@@ -53,10 +53,12 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
     if (!containerRef.current || mapRef.current) return;
     let cancelled = false;
 
-    Promise.all([
-      import("leaflet"),
-      import("leaflet.markercluster"),
-    ]).then(([L]) => {
+    const init = async () => {
+      const L = await import("leaflet");
+      // leaflet.markercluster verwacht window.L om zichzelf aan toe te voegen
+      (window as unknown as { L: typeof L }).L = L;
+      await import("leaflet.markercluster");
+
       if (cancelled || !containerRef.current || mapRef.current) return;
 
       let map: import("leaflet").Map;
@@ -99,8 +101,11 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
       clusterRef.current = cluster;
       leafletRef.current = L;
       mapRef.current = map;
+      setTimeout(() => map.invalidateSize(), 50);
       setMapReady(true);
-    });
+    };
+
+    init();
 
     return () => {
       cancelled = true;

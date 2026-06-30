@@ -187,7 +187,7 @@ export interface KansrijkPerceel {
   bouwgrondWaardeMax: number;
   margeMin: number;
   margeMax: number;
-  roiPct: number;
+  roiPct?: number;
 }
 
 export interface EigenaarInfo {
