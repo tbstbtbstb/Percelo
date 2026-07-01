@@ -1474,5 +1474,24 @@
     "bouwgrondWaardeMax": 924000,
     "margeMin": 445000,
     "margeMax": 722000
+  },
+  {
+    "id": "83",
+    "perceelId": "WAG00-X-4207",
+    "straatAdres": "Haarweg, Wageningen",
+    "gemeente": "Wageningen",
+    "provincie": "Gelderland",
+    "oppervlakteM2": 2800,
+    "lat": 51.9648,
+    "lon": 5.6198,
+    "bestemming": "Agrarisch",
+    "reedsBouwgrond": false,
+    "slagingskans": 72,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 20000,
+    "bouwgrondWaardeMin": 568000,
+    "bouwgrondWaardeMax": 812000,
+    "margeMin": 324000,
+    "margeMax": 568000
   }
 ]
