@@ -210,7 +210,7 @@ for (let i = 0; i < resterend.length; i += 5) {
   }
 
   // Whitelist: alleen bestemmingen die transformeerbaar zijn naar wonen
-  const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^groen|^landelijk/i;
+  const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^landelijk/i;
 
   for (const r of resultaten) {
     if (!r.ok || r.totaalScore < 50) {

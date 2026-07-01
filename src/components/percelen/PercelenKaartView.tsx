@@ -19,7 +19,7 @@ const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
   ),
 });
 
-const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^groen|^landelijk/i;
+const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^landelijk/i;
 const DRAWER_WIDTH = 440;
 const DRAWER_MARGIN = 20; // 1.25rem — ruimte tussen kaartrand en panel
 
