@@ -1368,9 +1368,17 @@ export async function berekenScore(perceel: Perceel): Promise<{
     {
       naam: "Huidig bestemmingsplan",
       gewicht: 5,
-      score: reedsBouwgrond ? 100 : isAgrarisch ? 60 : 40,
+      score: reedsBouwgrond ? 100
+        : /glastuinbouw|tuinbouw/i.test(huidigeBestemming) ? 75
+        : /agrarisch met waarden/i.test(huidigeBestemming) ? 50
+        : isAgrarisch ? 60
+        : 40,
       toelichting: reedsBouwgrond
         ? `Perceel heeft al een bouw-/woonbestemming (${huidigeBestemming}) — geen bestemmingswijziging nodig`
+        : /glastuinbouw|tuinbouw/i.test(huidigeBestemming)
+        ? `Perceel heeft glastuinbouw-/tuinbouwbestemming (${huidigeBestemming}) — gemeenten willen kassen vaak omzetten, hoge conversieratio`
+        : /agrarisch met waarden/i.test(huidigeBestemming)
+        ? `Perceel heeft bestemming "${huidigeBestemming}" — dubbelbestemming beschermt landschappelijke waarden, extra afwegingsstap vereist`
         : isAgrarisch
         ? `Perceel heeft agrarische bestemming (${huidigeBestemming}), wat een wijziging mogelijk maar complex maakt`
         : huidigeBestemming === "onbekend"
