@@ -44,108 +44,132 @@ if (!SECRET) {
 // - Oppervlakte 1.500-4.000m² (realistisch voor particulier)
 
 const SEEDS = [
-  // ── Haarlemmermeer (Noord-Holland) ──────────────────────────────────────
-  // Polderland met sterke woningvraag, veel precedenten
-  { adres: "Lisserweg 470, Haarlemmermeer", gemeente: "Haarlemmermeer", provincie: "Noord-Holland", lat: 52.2631, lon: 4.5789, oppervlakteM2: 2800 },
-  { adres: "Hoofdweg 500, Haarlemmermeer", gemeente: "Haarlemmermeer", provincie: "Noord-Holland", lat: 52.3011, lon: 4.6543, oppervlakteM2: 3200 },
-  { adres: "Nieuw-Vennepseweg 200, Haarlemmermeer", gemeente: "Haarlemmermeer", provincie: "Noord-Holland", lat: 52.2712, lon: 4.6312, oppervlakteM2: 2400 },
-  { adres: "Kruisweg 820, Haarlemmermeer", gemeente: "Haarlemmermeer", provincie: "Noord-Holland", lat: 52.3198, lon: 4.7103, oppervlakteM2: 1800 },
-
-  // ── Westland (Zuid-Holland) ─────────────────────────────────────────────
-  // Glastuinbouwgebied met sterke druk naar woningbouw
-  { adres: "Poeldijkseweg 50, Westland", gemeente: "Westland", provincie: "Zuid-Holland", lat: 52.0198, lon: 4.1923, oppervlakteM2: 3600 },
-  { adres: "Middel Broekweg 30, Westland", gemeente: "Westland", provincie: "Zuid-Holland", lat: 52.0089, lon: 4.2134, oppervlakteM2: 2900 },
-  { adres: "s-Gravenzandseweg 100, Westland", gemeente: "Westland", provincie: "Zuid-Holland", lat: 52.0023, lon: 4.1678, oppervlakteM2: 2100 },
+  // ── Pijnacker-Nootdorp (Zuid-Holland) ────────────────────────────────────
+  // Extreem hoge woningdruk, tussen Den Haag en Delft, glastuinbouw converteert
+  { adres: "Brasserkade 40, Pijnacker", gemeente: "Pijnacker-Nootdorp", provincie: "Zuid-Holland", lat: 51.9978, lon: 4.4312, oppervlakteM2: 2400 },
+  { adres: "Veenweg 80, Pijnacker", gemeente: "Pijnacker-Nootdorp", provincie: "Zuid-Holland", lat: 52.0089, lon: 4.4089, oppervlakteM2: 2800 },
+  { adres: "Groeneweg 60, Nootdorp", gemeente: "Pijnacker-Nootdorp", provincie: "Zuid-Holland", lat: 52.0201, lon: 4.3923, oppervlakteM2: 2100 },
 
   // ── Lansingerland (Zuid-Holland) ────────────────────────────────────────
-  // Snelgroeiende gemeente, veel woningbouw-precedenten
-  { adres: "Rodenburgseweg 12, Lansingerland", gemeente: "Lansingerland", provincie: "Zuid-Holland", lat: 51.9723, lon: 4.5234, oppervlakteM2: 2600 },
+  // Snelst groeiende gemeente ZH, tientallen woningbouw-precedenten
   { adres: "Berkelse Zweth 80, Lansingerland", gemeente: "Lansingerland", provincie: "Zuid-Holland", lat: 51.9889, lon: 4.5012, oppervlakteM2: 3100 },
   { adres: "Rodenrijseweg 200, Lansingerland", gemeente: "Lansingerland", provincie: "Zuid-Holland", lat: 51.9654, lon: 4.5445, oppervlakteM2: 1900 },
+  { adres: "Kruisweg 30, Bergschenhoek", gemeente: "Lansingerland", provincie: "Zuid-Holland", lat: 51.9812, lon: 4.4778, oppervlakteM2: 2600 },
 
-  // ── Katwijk (Zuid-Holland) ──────────────────────────────────────────────
-  // Kustgemeente, beperkt beschikbaar land, hoge grondwaarde
-  { adres: "Duinweg 110, Katwijk", gemeente: "Katwijk", provincie: "Zuid-Holland", lat: 52.2023, lon: 4.4067, oppervlakteM2: 1600 },
-  { adres: "Rijnsoever 40, Katwijk", gemeente: "Katwijk", provincie: "Zuid-Holland", lat: 52.2156, lon: 4.4312, oppervlakteM2: 2200 },
-  { adres: "Zeeweg 60, Katwijk", gemeente: "Katwijk", provincie: "Zuid-Holland", lat: 52.1978, lon: 4.3923, oppervlakteM2: 1800 },
+  // ── Houten (Utrecht) ────────────────────────────────────────────────────
+  // Groeikern Utrecht, veel historische precedenten, actief gemeente
+  { adres: "Doornseweg 120, Houten", gemeente: "Houten", provincie: "Utrecht", lat: 52.0178, lon: 5.1823, oppervlakteM2: 2800 },
+  { adres: "Randweg 80, Houten", gemeente: "Houten", provincie: "Utrecht", lat: 52.0312, lon: 5.1612, oppervlakteM2: 2300 },
+  { adres: "Steenhovenweg 40, Houten", gemeente: "Houten", provincie: "Utrecht", lat: 52.0089, lon: 5.1978, oppervlakteM2: 3100 },
 
-  // ── Alphen aan den Rijn (Zuid-Holland) ──────────────────────────────────
-  // Polderrand, actieve woningbouwopgave
-  { adres: "Leidseweg 340, Alphen aan den Rijn", gemeente: "Alphen aan den Rijn", provincie: "Zuid-Holland", lat: 52.1301, lon: 4.6712, oppervlakteM2: 3400 },
-  { adres: "Gnephoekseweg 20, Alphen aan den Rijn", gemeente: "Alphen aan den Rijn", provincie: "Zuid-Holland", lat: 52.1189, lon: 4.6501, oppervlakteM2: 2800 },
-  { adres: "Woudsedijk 80, Alphen aan den Rijn", gemeente: "Alphen aan den Rijn", provincie: "Zuid-Holland", lat: 52.1423, lon: 4.6878, oppervlakteM2: 2100 },
+  // ── Nieuwegein (Utrecht) ─────────────────────────────────────────────────
+  // Direct grenst aan Utrecht, hoge woningvraag, beperkte ruimte
+  { adres: "Zandpad 60, Nieuwegein", gemeente: "Nieuwegein", provincie: "Utrecht", lat: 52.0289, lon: 5.0834, oppervlakteM2: 2000 },
+  { adres: "Batauweg 100, Nieuwegein", gemeente: "Nieuwegein", provincie: "Utrecht", lat: 52.0423, lon: 5.0678, oppervlakteM2: 1800 },
+
+  // ── Veenendaal (Utrecht) ─────────────────────────────────────────────────
+  // Foodvalley hart, hoge woningdruk, actief woonbeleid
+  { adres: "Rhenenseweg 200, Veenendaal", gemeente: "Veenendaal", provincie: "Utrecht", lat: 52.0123, lon: 5.5534, oppervlakteM2: 2600 },
+  { adres: "Industrieweg 80, Veenendaal", gemeente: "Veenendaal", provincie: "Utrecht", lat: 52.0278, lon: 5.5312, oppervlakteM2: 2200 },
+
+  // ── Wageningen (Gelderland) ──────────────────────────────────────────────
+  // Universiteitsstad, extreme woningnood, agrarische rand
+  { adres: "Droevendaalsesteeg 10, Wageningen", gemeente: "Wageningen", provincie: "Gelderland", lat: 51.9823, lon: 5.6612, oppervlakteM2: 2400 },
+  { adres: "Bornsesteeg 80, Wageningen", gemeente: "Wageningen", provincie: "Gelderland", lat: 51.9712, lon: 5.6823, oppervlakteM2: 2800 },
 
   // ── Ede (Gelderland) ────────────────────────────────────────────────────
-  // Groot grondgebied, actief woonbeleid, rand Veluwe
+  // Foodvalley, grote woningbouwopgave, weinig NNN aan westzijde
   { adres: "Telefoonweg 100, Ede", gemeente: "Ede", provincie: "Gelderland", lat: 52.0512, lon: 5.6123, oppervlakteM2: 3800 },
-  { adres: "Arnhemseweg 250, Ede", gemeente: "Ede", provincie: "Gelderland", lat: 52.0234, lon: 5.6589, oppervlakteM2: 2900 },
+  { adres: "Bennekomseweg 200, Ede", gemeente: "Ede", provincie: "Gelderland", lat: 52.0334, lon: 5.6734, oppervlakteM2: 2900 },
   { adres: "Wiekslag 40, Ede", gemeente: "Ede", provincie: "Gelderland", lat: 52.0678, lon: 5.6312, oppervlakteM2: 2400 },
 
-  // ── Barneveld (Gelderland) ──────────────────────────────────────────────
-  // Groeiende gemeente, actief woningbouwbeleid
-  { adres: "Barnseweg 150, Barneveld", gemeente: "Barneveld", provincie: "Gelderland", lat: 52.1423, lon: 5.5834, oppervlakteM2: 4200 },
-  { adres: "Garderenseweg 60, Barneveld", gemeente: "Barneveld", provincie: "Gelderland", lat: 52.1589, lon: 5.5612, oppervlakteM2: 3100 },
-  { adres: "Zwarteweg 30, Barneveld", gemeente: "Barneveld", provincie: "Gelderland", lat: 52.1312, lon: 5.6012, oppervlakteM2: 2600 },
-
   // ── Nijkerk (Gelderland) ────────────────────────────────────────────────
-  // Gelderse vallei, veel woningdruk
+  // Gelderse Vallei, tussen Utrecht en Amersfoort, hoge druk
   { adres: "Holkerweg 80, Nijkerk", gemeente: "Nijkerk", provincie: "Gelderland", lat: 52.2234, lon: 5.4789, oppervlakteM2: 2800 },
   { adres: "Corlaerseweg 120, Nijkerk", gemeente: "Nijkerk", provincie: "Gelderland", lat: 52.2089, lon: 5.4934, oppervlakteM2: 3400 },
-  { adres: "Slichtenhorsterweg 40, Nijkerk", gemeente: "Nijkerk", provincie: "Gelderland", lat: 52.2356, lon: 5.4612, oppervlakteM2: 2100 },
 
-  // ── Venlo (Limburg) ─────────────────────────────────────────────────────
-  // Grensstreek, agrarisch-stedelijke overgang
-  { adres: "Kaldenkerkerweg 80, Venlo", gemeente: "Venlo", provincie: "Limburg", lat: 51.3812, lon: 6.1567, oppervlakteM2: 3600 },
-  { adres: "Tegelseweg 200, Venlo", gemeente: "Venlo", provincie: "Limburg", lat: 51.3623, lon: 6.1789, oppervlakteM2: 2900 },
-  { adres: "Venlosesteenweg 50, Venlo", gemeente: "Venlo", provincie: "Limburg", lat: 51.3934, lon: 6.1423, oppervlakteM2: 2400 },
+  // ── Son en Breugel (Noord-Brabant) ──────────────────────────────────────
+  // Direct bij Eindhoven, Brainport, weinig NNN, hoge grondwaarde
+  { adres: "Ekkersrijt 80, Son en Breugel", gemeente: "Son en Breugel", provincie: "Noord-Brabant", lat: 51.5189, lon: 5.5023, oppervlakteM2: 2600 },
+  { adres: "Breugelse Bossen rand, Son", gemeente: "Son en Breugel", provincie: "Noord-Brabant", lat: 51.5312, lon: 5.4823, oppervlakteM2: 3000 },
+  { adres: "Sonseweg 120, Son en Breugel", gemeente: "Son en Breugel", provincie: "Noord-Brabant", lat: 51.5089, lon: 5.5189, oppervlakteM2: 2200 },
 
-  // ── Horst aan de Maas (Limburg) ─────────────────────────────────────────
-  // Agrarische gemeente, actieve kernverdichting
-  { adres: "Meerlosebaan 30, Horst aan de Maas", gemeente: "Horst aan de Maas", provincie: "Limburg", lat: 51.4534, lon: 6.0589, oppervlakteM2: 4100 },
-  { adres: "Grubbenvorsterweg 80, Horst aan de Maas", gemeente: "Horst aan de Maas", provincie: "Limburg", lat: 51.4312, lon: 6.0812, oppervlakteM2: 3200 },
-  { adres: "Sevenum Dorp 60, Horst aan de Maas", gemeente: "Horst aan de Maas", provincie: "Limburg", lat: 51.4123, lon: 6.0345, oppervlakteM2: 2800 },
+  // ── Veldhoven (Noord-Brabant) ────────────────────────────────────────────
+  // ASML-effect: extreem hoge woningvraag, weinig beschikbare grond
+  { adres: "Oerleseweg 60, Veldhoven", gemeente: "Veldhoven", provincie: "Noord-Brabant", lat: 51.4012, lon: 5.3834, oppervlakteM2: 2400 },
+  { adres: "Heerbaan 200, Veldhoven", gemeente: "Veldhoven", provincie: "Noord-Brabant", lat: 51.4178, lon: 5.4012, oppervlakteM2: 2800 },
 
-  // ── Breda (Noord-Brabant) ────────────────────────────────────────────────
-  // Grote stad met groeiende randgemeenten
-  { adres: "Bredaseweg 400, Breda", gemeente: "Breda", provincie: "Noord-Brabant", lat: 51.5923, lon: 4.7534, oppervlakteM2: 2600 },
-  { adres: "Teteringseweg 150, Breda", gemeente: "Breda", provincie: "Noord-Brabant", lat: 51.5712, lon: 4.8012, oppervlakteM2: 3100 },
-  { adres: "Molengracht buitengebied, Breda", gemeente: "Breda", provincie: "Noord-Brabant", lat: 51.5534, lon: 4.7789, oppervlakteM2: 2200 },
+  // ── Waalwijk (Noord-Brabant) ─────────────────────────────────────────────
+  // Actieve woningbouwgemeente, weinig NNN, goede infrastructuur
+  { adres: "Taxandriaweg 80, Waalwijk", gemeente: "Waalwijk", provincie: "Noord-Brabant", lat: 51.6878, lon: 5.0534, oppervlakteM2: 3200 },
+  { adres: "Baardwijksche Overlaat, Waalwijk", gemeente: "Waalwijk", provincie: "Noord-Brabant", lat: 51.7012, lon: 5.0312, oppervlakteM2: 2800 },
 
-  // ── Meierijstad (Noord-Brabant) ──────────────────────────────────────────
-  // Nieuwgevormde gemeente, actief woonbeleid
-  { adres: "Veghelsedijk 80, Meierijstad", gemeente: "Meierijstad", provincie: "Noord-Brabant", lat: 51.6234, lon: 5.4312, oppervlakteM2: 3800 },
-  { adres: "Bollendonk 40, Meierijstad", gemeente: "Meierijstad", provincie: "Noord-Brabant", lat: 51.6089, lon: 5.4567, oppervlakteM2: 2900 },
-  { adres: "Zondveldseweg 60, Meierijstad", gemeente: "Meierijstad", provincie: "Noord-Brabant", lat: 51.6412, lon: 5.4089, oppervlakteM2: 2400 },
+  // ── Tilburg rand (Noord-Brabant) ────────────────────────────────────────
+  // Grote stad, groeirand, hoge woningvraag, historische precedenten
+  { adres: "Udenhoutseweg 150, Tilburg", gemeente: "Tilburg", provincie: "Noord-Brabant", lat: 51.5823, lon: 5.1312, oppervlakteM2: 3400 },
+  { adres: "Bredaseweg 500, Tilburg", gemeente: "Tilburg", provincie: "Noord-Brabant", lat: 51.5534, lon: 4.9923, oppervlakteM2: 2900 },
 
-  // ── Zwolle (Overijssel) ──────────────────────────────────────────────────
-  // Groeikern Noord-Nederland
-  { adres: "Zwolseweg 300, Zwolle", gemeente: "Zwolle", provincie: "Overijssel", lat: 52.5123, lon: 6.0789, oppervlakteM2: 3200 },
+  // ── Alphen-Chaam (Noord-Brabant) ────────────────────────────────────────
+  // Kleine gemeente, veel agrarische gronden, naast Breda
+  { adres: "Alphenseweg 80, Alphen-Chaam", gemeente: "Alphen-Chaam", provincie: "Noord-Brabant", lat: 51.4978, lon: 4.9312, oppervlakteM2: 3800 },
+
+  // ── Harderwijk (Gelderland) ──────────────────────────────────────────────
+  // Veluwerand, hoge woningdruk, actieve gemeente
+  { adres: "Zeeasterweg 60, Harderwijk", gemeente: "Harderwijk", provincie: "Gelderland", lat: 52.3423, lon: 5.6312, oppervlakteM2: 2600 },
+  { adres: "Leuvenumseweg 100, Harderwijk", gemeente: "Harderwijk", provincie: "Gelderland", lat: 52.3589, lon: 5.6089, oppervlakteM2: 3100 },
+
+  // ── Apeldoorn westzijde (Gelderland) ────────────────────────────────────
+  // Westzijde = weinig Veluwe/NNN, hoge woningvraag, groot grondgebied
+  { adres: "Kayersdijk 150, Apeldoorn", gemeente: "Apeldoorn", provincie: "Gelderland", lat: 52.2178, lon: 5.9412, oppervlakteM2: 3600 },
+  { adres: "Laan van Malkenschoten 40, Apeldoorn", gemeente: "Apeldoorn", provincie: "Gelderland", lat: 52.2312, lon: 5.9234, oppervlakteM2: 2800 },
+
+  // ── Zeewolde (Flevoland) ─────────────────────────────────────────────────
+  // Geplande groeikern, goede infrastructuur, weinig beperkingen
+  { adres: "Gooiseweg 200, Zeewolde", gemeente: "Zeewolde", provincie: "Flevoland", lat: 52.3312, lon: 5.5289, oppervlakteM2: 4200 },
+  { adres: "Elspeterweg 80, Zeewolde", gemeente: "Zeewolde", provincie: "Flevoland", lat: 52.3489, lon: 5.5089, oppervlakteM2: 3600 },
+
+  // ── Almere Poort rand (Flevoland) ───────────────────────────────────────
+  // Massieve uitbreidingsopgave, actief gemeentebeleid, geen NNN
+  { adres: "Hogering 300, Almere", gemeente: "Almere", provincie: "Flevoland", lat: 52.3623, lon: 5.2123, oppervlakteM2: 3200 },
+  { adres: "Edvard Munchweg 60, Almere", gemeente: "Almere", provincie: "Flevoland", lat: 52.3789, lon: 5.1923, oppervlakteM2: 2700 },
+
+  // ── Dordrecht rand (Zuid-Holland) ───────────────────────────────────────
+  // Eiland van Dordrecht, agrarische randen, hoge regionale druk
+  { adres: "Wieldrechtseweg 80, Dordrecht", gemeente: "Dordrecht", provincie: "Zuid-Holland", lat: 51.7989, lon: 4.6623, oppervlakteM2: 3400 },
+  { adres: "Baanhoekweg 120, Dordrecht", gemeente: "Dordrecht", provincie: "Zuid-Holland", lat: 51.8123, lon: 4.6834, oppervlakteM2: 2600 },
+
+  // ── Rijswijk (Zuid-Holland) ──────────────────────────────────────────────
+  // Direct bij Den Haag, schaarse grond, hoge waarde
+  { adres: "Vlietweg 60, Rijswijk", gemeente: "Rijswijk", provincie: "Zuid-Holland", lat: 52.0334, lon: 4.3234, oppervlakteM2: 1800 },
+
+  // ── Zoetermeer rand (Zuid-Holland) ──────────────────────────────────────
+  // Grenst aan Randstad, actieve uitbreidingslocaties
+  { adres: "Afrikaweg 40, Zoetermeer", gemeente: "Zoetermeer", provincie: "Zuid-Holland", lat: 52.0623, lon: 4.4723, oppervlakteM2: 2200 },
+
+  // ── Katwijk (Zuid-Holland) ──────────────────────────────────────────────
+  // Kustgemeente, beperkte ruimte, hoge grondwaarden
+  { adres: "Duinweg 110, Katwijk", gemeente: "Katwijk", provincie: "Zuid-Holland", lat: 52.2023, lon: 4.4067, oppervlakteM2: 1600 },
+  { adres: "Rijnsoever 40, Katwijk", gemeente: "Katwijk", provincie: "Zuid-Holland", lat: 52.2156, lon: 4.4312, oppervlakteM2: 2200 },
+
+  // ── Zwolle westzijde (Overijssel) ───────────────────────────────────────
+  // Groeikern Noord-Nederland, westzijde = weinig NNN
   { adres: "Meppelerweg 150, Zwolle", gemeente: "Zwolle", provincie: "Overijssel", lat: 52.5312, lon: 6.0534, oppervlakteM2: 2700 },
-  { adres: "Mastenbroekerdijk 50, Zwolle", gemeente: "Zwolle", provincie: "Overijssel", lat: 52.5489, lon: 6.0312, oppervlakteM2: 4100 },
+  { adres: "Zwolseweg 300, Zwolle", gemeente: "Zwolle", provincie: "Overijssel", lat: 52.5123, lon: 6.0789, oppervlakteM2: 3200 },
 
-  // ── Deventer (Overijssel) ────────────────────────────────────────────────
-  // IJsselzone, actieve woningbouwopgave
-  { adres: "Holterweg 120, Deventer", gemeente: "Deventer", provincie: "Overijssel", lat: 52.2623, lon: 6.1923, oppervlakteM2: 3600 },
-  { adres: "Hanzeweg 200, Deventer", gemeente: "Deventer", provincie: "Overijssel", lat: 52.2489, lon: 6.1712, oppervlakteM2: 2800 },
-  { adres: "Colmschaterweg 80, Deventer", gemeente: "Deventer", provincie: "Overijssel", lat: 52.2812, lon: 6.1534, oppervlakteM2: 2100 },
+  // ── Barneveld (Gelderland) ──────────────────────────────────────────────
+  // Foodvalley, actief woonbeleid, weinig NNN aan noordzijde
+  { adres: "Barnseweg 150, Barneveld", gemeente: "Barneveld", provincie: "Gelderland", lat: 52.1423, lon: 5.5834, oppervlakteM2: 4200 },
+  { adres: "Garderenseweg 60, Barneveld", gemeente: "Barneveld", provincie: "Gelderland", lat: 52.1589, lon: 5.5612, oppervlakteM2: 3100 },
 
-  // ── Groningen (stad) ─────────────────────────────────────────────────────
-  // Universiteitsstad, hoge woningvraag
-  { adres: "Harkstederweg 60, Groningen", gemeente: "Groningen", provincie: "Groningen", lat: 53.2123, lon: 6.6234, oppervlakteM2: 2900 },
-  { adres: "Groninger Westwijkweg 100, Groningen", gemeente: "Groningen", provincie: "Groningen", lat: 53.2312, lon: 6.5789, oppervlakteM2: 3400 },
-  { adres: "Oosterhoogebrug 40, Groningen", gemeente: "Groningen", provincie: "Groningen", lat: 53.2489, lon: 6.6512, oppervlakteM2: 2200 },
+  // ── Breda westzijde (Noord-Brabant) ────────────────────────────────────
+  // Grote stad, westzijde = minder NNN, veel precedenten
+  { adres: "Teteringseweg 150, Breda", gemeente: "Breda", provincie: "Noord-Brabant", lat: 51.5712, lon: 4.8012, oppervlakteM2: 3100 },
+  { adres: "Bredaseweg 400, Breda", gemeente: "Breda", provincie: "Noord-Brabant", lat: 51.5923, lon: 4.7534, oppervlakteM2: 2600 },
 
-  // ── Leeuwarden (Friesland) ───────────────────────────────────────────────
-  // Provinciehoofdstad, woningbouwtekort
-  { adres: "Harlingerstraatweg 200, Leeuwarden", gemeente: "Leeuwarden", provincie: "Friesland", lat: 53.2012, lon: 5.7534, oppervlakteM2: 3800 },
-  { adres: "Hemriksein 80, Leeuwarden", gemeente: "Leeuwarden", provincie: "Friesland", lat: 53.1923, lon: 5.7912, oppervlakteM2: 2600 },
-  { adres: "Marsumerdyk 50, Leeuwarden", gemeente: "Leeuwarden", provincie: "Friesland", lat: 53.2234, lon: 5.7289, oppervlakteM2: 3100 },
-
-  // ── Emmen (Drenthe) ──────────────────────────────────────────────────────
-  // Grote gemeente, veel agrarisch potentieel
-  { adres: "Weerdingerstraat 300, Emmen", gemeente: "Emmen", provincie: "Drenthe", lat: 52.7923, lon: 6.9012, oppervlakteM2: 4500 },
-  { adres: "Rietveenweg 80, Emmen", gemeente: "Emmen", provincie: "Drenthe", lat: 52.7734, lon: 6.9289, oppervlakteM2: 3800 },
-  { adres: "Bruggertstraat 150, Emmen", gemeente: "Emmen", provincie: "Drenthe", lat: 52.8089, lon: 6.8812, oppervlakteM2: 3200 },
+  // ── Haarlemmermeer (Noord-Holland) ──────────────────────────────────────
+  // Polderland, sterke woningvraag, nabij Schiphol
+  { adres: "Hoofdweg 500, Haarlemmermeer", gemeente: "Haarlemmermeer", provincie: "Noord-Holland", lat: 52.3011, lon: 4.6543, oppervlakteM2: 3200 },
+  { adres: "Kruisweg 820, Haarlemmermeer", gemeente: "Haarlemmermeer", provincie: "Noord-Holland", lat: 52.3198, lon: 4.7103, oppervlakteM2: 1800 },
 ];
 
 // ─── Aankoopprijs en marge schatten ─────────────────────────────────────────
