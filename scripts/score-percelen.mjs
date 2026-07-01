@@ -75,7 +75,7 @@ const SEEDS = [
   // ── Wageningen (Gelderland) ──────────────────────────────────────────────
   // Universiteitsstad, extreme woningnood, agrarische rand
   { adres: "Droevendaalsesteeg 10, Wageningen", gemeente: "Wageningen", provincie: "Gelderland", lat: 51.9823, lon: 5.6612, oppervlakteM2: 2400 },
-  { adres: "Bornsesteeg 80, Wageningen", gemeente: "Wageningen", provincie: "Gelderland", lat: 51.9712, lon: 5.6823, oppervlakteM2: 2800 },
+  { adres: "Haarweg, Wageningen", gemeente: "Wageningen", provincie: "Gelderland", lat: 51.9648, lon: 5.6198, oppervlakteM2: 2800 },
 
   // ── Ede (Gelderland) ────────────────────────────────────────────────────
   // Foodvalley, grote woningbouwopgave, weinig NNN aan westzijde
