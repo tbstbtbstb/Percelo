@@ -236,14 +236,19 @@ for (let i = 0; i < resterend.length; i += 5) {
     continue;
   }
 
-  const IS_WOON_RE = /^wonen/i;
+  // Whitelist: alleen bestemmingen die transformeerbaar zijn naar wonen
+  const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^groen|^landelijk/i;
 
   for (const r of resultaten) {
     if (!r.ok || r.totaalScore < 50) {
       aantalOvergeslagen++;
       continue;
     }
-    if (r.reedsBouwgrond || IS_WOON_RE.test(r.huidigeBestemming ?? "")) {
+    if (r.reedsBouwgrond) {
+      aantalOvergeslagen++;
+      continue;
+    }
+    if (!IS_TRANSFORMABEL_RE.test(r.huidigeBestemming ?? "")) {
       aantalOvergeslagen++;
       continue;
     }
@@ -264,6 +269,7 @@ for (let i = 0; i < resterend.length; i += 5) {
       lat: seed.lat,
       lon: seed.lon,
       bestemming: r.huidigeBestemming ?? "Agrarisch",
+      reedsBouwgrond: r.reedsBouwgrond ?? false,
       slagingskans: r.totaalScore,
       scoreKlasse: r.scoreKlasse,
       geschatteAankoopprijs: fin.aankoopprijs,

@@ -19,7 +19,7 @@ const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
   ),
 });
 
-const IS_WOON_RE = /\bwonen\b|woongebied|\bwoningdelen\b|\bwoningsplitsing\b|\bkamerverhuur\b|\bbouwen\b/i;
+const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^groen|^landelijk/i;
 const DRAWER_WIDTH = 440;
 const DRAWER_MARGIN = 20; // 1.25rem — ruimte tussen kaartrand en panel
 
@@ -63,7 +63,7 @@ export function PercelenKaartView() {
   const gefilterd = useMemo(() =>
     ALLE_PERCELEN
       .filter((p) =>
-        !IS_WOON_RE.test(p.bestemming) &&
+        IS_TRANSFORMABEL_RE.test(p.bestemming) &&
         !p.reedsBouwgrond &&
         (!filterProvincie || p.provincie === filterProvincie) &&
         p.slagingskans >= filterMinSlagingskans &&
