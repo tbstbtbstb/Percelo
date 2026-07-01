@@ -27,6 +27,7 @@ export async function POST(req: Request) {
         totaalScore: score.totaalScore,
         scoreKlasse: score.scoreKlasse,
         huidigeBestemming: score.huidigeBestemming,
+        reedsBouwgrond: score.reedsBouwgrond,
         hardBlockers: score.hardBlockers,
       });
     } catch (e) {

@@ -243,7 +243,7 @@ for (let i = 0; i < resterend.length; i += 5) {
       aantalOvergeslagen++;
       continue;
     }
-    if (IS_WOON_RE.test(r.huidigeBestemming ?? "")) {
+    if (r.reedsBouwgrond || IS_WOON_RE.test(r.huidigeBestemming ?? "")) {
       aantalOvergeslagen++;
       continue;
     }

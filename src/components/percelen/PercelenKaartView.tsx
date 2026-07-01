@@ -19,7 +19,7 @@ const KaartMetPins = dynamic(() => import("./KaartMetPins"), {
   ),
 });
 
-const IS_WOON_RE = /^wonen/i;
+const IS_WOON_RE = /\bwonen\b|woongebied|\bwoningdelen\b|\bwoningsplitsing\b|\bkamerverhuur\b|\bbouwen\b/i;
 const DRAWER_WIDTH = 440;
 const DRAWER_MARGIN = 20; // 1.25rem — ruimte tussen kaartrand en panel
 
@@ -64,6 +64,7 @@ export function PercelenKaartView() {
     ALLE_PERCELEN
       .filter((p) =>
         !IS_WOON_RE.test(p.bestemming) &&
+        !p.reedsBouwgrond &&
         (!filterProvincie || p.provincie === filterProvincie) &&
         p.slagingskans >= filterMinSlagingskans &&
         p.margeMin >= filterMinMarge * 1000
