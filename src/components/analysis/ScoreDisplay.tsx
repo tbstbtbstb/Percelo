@@ -490,8 +490,8 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
                               fontSize: "0.75rem", color: "#525252", fontFamily: "inherit",
                             }}
                           >
-                            {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                             {isOpen ? "Minder uitleg" : "Wat betekent dit?"}
+                            {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
 
                           {isOpen && (
