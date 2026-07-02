@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useUser } from "@clerk/nextjs";
 import { Button, InlineLoading } from "@carbon/react";
-import { Location, Download, Compare, Locked } from "@carbon/icons-react";
+import { Location, Download, Locked } from "@carbon/icons-react";
 import { AdviesHeader, AdviesDetails } from "@/components/analysis/AdviesKaart";
 import { AddressSearch } from "@/components/analysis/AddressSearch";
 import { ScoreHoofd, ScoreFactoren } from "@/components/analysis/ScoreDisplay";
@@ -24,12 +24,11 @@ const KadastraleKaartPicker = dynamic(
   )}
 );
 
-type TabId = "resultaten" | "actieplan" | "waardestijging" | "correspondentie";
+type TabId = "resultaten" | "actieplan" | "correspondentie";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "resultaten",      label: "Analyseresultaten" },
   { id: "actieplan",       label: "Actieplan & voortgang" },
-  { id: "waardestijging",  label: "Waardestijging" },
   { id: "correspondentie", label: "Correspondentie" },
 ];
 
@@ -370,8 +369,13 @@ export default function AnalysePage() {
         </div>
       ) : (
         <>
+          {/* Waardestijging — financiële incentive als eerste */}
+          <div style={{ maxWidth: "52rem", margin: "0 auto", padding: "1.5rem 1rem 0" }}>
+            <WaardestijgingCalculator data={resultaat.waardestijging} />
+          </div>
+
           {/* Sticky tabbar */}
-          <div style={{ position: "sticky", top: "0", zIndex: 50, backgroundColor: "#ffffff", borderBottom: "1px solid #e0e0e0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <div style={{ position: "sticky", top: "0", zIndex: 50, marginTop: "1.5rem", backgroundColor: "#ffffff", borderBottom: "1px solid #e0e0e0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
             <div style={{ maxWidth: "52rem", margin: "0 auto", padding: "0 1rem", display: "flex", overflowX: "auto", scrollbarWidth: "none" }}>
               {TABS.map((tab) => {
                 const actief = actieveTab === tab.id;
@@ -413,25 +417,6 @@ export default function AnalysePage() {
             {actieveTab === "actieplan" && (
               tabVergrendeld("actieplan") ? <UpgradeWall tabLabel="Actieplan & voortgang" /> : (
                 <ActiePlan onderzoeken={resultaat.onderzoeken} kostenRaming={resultaat.kostenRaming} />
-              )
-            )}
-            {actieveTab === "waardestijging" && (
-              tabVergrendeld("waardestijging") ? <UpgradeWall tabLabel="Waardestijging" /> : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                  <WaardestijgingCalculator data={resultaat.waardestijging} />
-                  <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)", overflow: "hidden" }}>
-                    <div style={{ height: "4px", backgroundColor: "#0f62fe" }} />
-                    <div style={{ padding: "1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-                      <div>
-                        <p style={{ fontWeight: 700, fontSize: "0.875rem", color: "#161616", marginBottom: "0.25rem" }}>Vergelijk buurgemeenten</p>
-                        <p style={{ fontSize: "0.8125rem", color: "#525252" }}>Bekijk welke gemeente in de buurt het meest open staat voor woningbouw.</p>
-                      </div>
-                      <a href={`/vergelijker?lat=${resultaat.perceel.lat}&lon=${resultaat.perceel.lon}&gemeente=${encodeURIComponent(resultaat.perceel.gemeente ?? "")}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem", padding: "0.5rem 1rem", fontSize: "0.875rem", fontWeight: 600, backgroundColor: "#0f62fe", color: "#ffffff", textDecoration: "none", borderRadius: "4px", flexShrink: 0 }}>
-                        <Compare size={16} /> Naar gemeentevergelijker
-                      </a>
-                    </div>
-                  </div>
-                </div>
               )
             )}
             {actieveTab === "correspondentie" && (
