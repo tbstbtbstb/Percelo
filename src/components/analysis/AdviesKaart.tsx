@@ -1,6 +1,7 @@
 "use client";
 
-import { Flag, Warning, Help, Information, CircleDash, Checkmark, Close, Undo } from "@carbon/icons-react";
+import { useState } from "react";
+import { Flag, Warning, Help, Information, CircleDash, Checkmark, Close, Undo, ChevronDown, ChevronUp } from "@carbon/icons-react";
 import type { AdviesKaartData, AdviesLabel } from "@/types";
 import { Uitleg } from "@/components/ui/Uitleg";
 
@@ -26,6 +27,15 @@ const IMPACT_CONFIG = {
   hoog:      { kleur: "#da1e28", label: "Hoog" },
   gemiddeld: { kleur: "#b28600", label: "Gemiddeld" },
   laag:      { kleur: "#525252", label: "Laag" },
+};
+
+const ADVIES_UITLEG: Record<AdviesLabel, string> = {
+  "go":
+    "Een kansrijke score betekent dat de locatie en het gemeentelijk beleid in uw voordeel wijzen. Dat is een goed startpunt, maar het is geen garantie. U moet nog steeds een formeel verzoek indienen, onderzoeken laten uitvoeren en de procedure doorlopen. Met een goede voorbereiding is de kans op een positief besluit reëel.",
+  "twijfel":
+    "Een twijfelgeval betekent dat er zowel kansen als risico's zijn. Er zijn factoren die in uw voordeel werken, maar ook obstakels die de procedure kunnen bemoeilijken of vertragen. Met de juiste aanpak — zoals extra onderzoek of politiek draagvlak opbouwen — kan de kans op goedkeuring worden vergroot. Zonder die aanpak is de uitkomst onzeker.",
+  "no-go":
+    "Een ongunstige score betekent dat de locatie of het beleid meerdere rode vlaggen heeft. Dat wil niet zeggen dat een bestemmingswijziging onmogelijk is, maar de drempel is hoog. Het verdient aanbeveling om eerst de meest kritieke blokkades in kaart te brengen en te beoordelen of verdere investering zinvol is.",
 };
 
 const CARD: React.CSSProperties = {
@@ -154,6 +164,7 @@ function GemeenteStrategieBlok({ data }: { data: AdviesKaartData["gemeenteStrate
 export function AdviesHeader({ data }: { data: AdviesKaartData }) {
   const cfg = ADVIES_CONFIG[data.advies];
   const AdviesIcon = cfg.Icon;
+  const [open, setOpen] = useState(false);
 
   return (
     <div style={{
@@ -169,7 +180,7 @@ export function AdviesHeader({ data }: { data: AdviesKaartData }) {
         }}>
           <AdviesIcon size={18} style={{ color: "#ffffff" }} />
         </div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.375rem" }}>
             <span style={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: cfg.kleur }}>
               Advies
@@ -184,6 +195,22 @@ export function AdviesHeader({ data }: { data: AdviesKaartData }) {
           <p style={{ fontSize: "0.9375rem", fontWeight: 600, color: cfg.kleur, lineHeight: 1.5 }}>
             {data.kernzin}
           </p>
+          <button
+            onClick={() => setOpen((o) => !o)}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "0.25rem",
+              background: "none", border: "none", padding: "0.25rem 0", cursor: "pointer",
+              fontSize: "0.75rem", color: cfg.kleur, fontFamily: "inherit", opacity: 0.8,
+            }}
+          >
+            {open ? "Minder uitleg" : "Wat betekent dit?"}
+            {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          {open && (
+            <p style={{ fontSize: "0.875rem", color: cfg.kleur, lineHeight: 1.5, marginTop: "0.375rem", opacity: 0.85 }}>
+              {ADVIES_UITLEG[data.advies]}
+            </p>
+          )}
         </div>
       </div>
     </div>
