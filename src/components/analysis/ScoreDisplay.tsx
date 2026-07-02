@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tag } from "@carbon/react";
-import { CheckmarkFilled, MisuseOutline, WarningAltFilled } from "@carbon/icons-react";
+import { CheckmarkFilled, MisuseOutline, WarningAltFilled, ChevronDown, ChevronUp } from "@carbon/icons-react";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ResponsiveContainer,
@@ -50,6 +50,44 @@ const KORTE_NAAM: Record<string, string> = {
 function kortNaam(naam: string) {
   return KORTE_NAAM[naam] ?? (naam.length > 16 ? naam.slice(0, 14) + "…" : naam);
 }
+
+const FACTOR_UITLEG: Record<string, string> = {
+  "Bestemmingsplan":
+    "Het bestemmingsplan legt per perceel vast wat er mag: wonen, landbouw, natuur, bedrijf, enzovoort. Een perceel met een agrarische bestemming heeft de meeste kans op omzetting naar wonen, zeker als het grenst aan bestaande bebouwing. Een perceel met een natuur- of waterbestemming heeft minder kans, tenzij de gemeente al bezig is met een planwijziging.",
+
+  "Afstand tot bebouwde kom":
+    "Percelen die direct grenzen aan of dicht bij een bestaande woonwijk liggen, worden door gemeenten gezien als een 'logische uitbreiding'. Hoe verder een perceel van de bebouwde kom af ligt, hoe meer onderbouwing een gemeente vraagt — het wordt dan moeilijker om aan te tonen waarom juist op die plek gebouwd moet worden.",
+
+  "Provinciale omgevingsvisie":
+    "Elke provincie heeft een omgevingsvisie: een langetermijnplan dat aangeeft welke gebieden geschikt zijn voor woningbouw, landbouw of natuur. Als de provincie een perceel aanwijst als zoekgebied voor woningbouw, vergroot dit de kans op goedkeuring aanzienlijk. Staat het gebied aangemerkt als 'geen verstedelijking', dan is een wijziging veel moeilijker door te voeren.",
+
+  "Natura 2000 nabijheid":
+    "Natura 2000 is een Europees netwerk van beschermde natuur- en leefgebieden voor zeldzame planten en dieren. Ligt een perceel dicht bij zo'n gebied, dan moet bij een bouwplan worden aangetoond dat de werkzaamheden de natuur niet schaden. Dit gebeurt via een AERIUS-berekening: een computerprogramma dat berekent hoeveel stikstof een bouwproject uitstoot en of dat de nabijgelegen natuur verslechtert. Hoe verder het perceel van een Natura 2000-gebied, hoe eenvoudiger de procedure.",
+
+  "Nationaal Natuur Netwerk":
+    "Het Nationaal Natuur Netwerk (NNN) is een groot aaneengesloten netwerk van beschermde natuurgebieden in Nederland, vastgelegd door de provincies. Percelen die volledig binnen het NNN liggen, mogen in principe niet bebouwd worden. Ligt een perceel in de buurt maar er niet in, dan kan er soms nog wel gebouwd worden, maar vraagt de provincie een extra motivering.",
+
+  "Historische precedenten":
+    "Een bestemmingswijziging die eerder al is toegestaan in dezelfde gemeente, werkt in uw voordeel. Het toont aan dat de gemeente bereid is om agrarische grond om te zetten naar woonbestemming. Hoe meer vergelijkbare gevallen zijn goedgekeurd, hoe sterker uw onderbouwing bij een nieuwe aanvraag.",
+
+  "Netcongestie regio":
+    "In delen van Nederland is het elektriciteitsnet zo vol dat netbeheerders als Liander of Stedin tijdelijk geen nieuwe aansluitingen kunnen realiseren. Voor individuele woningbouw is dit nu een beperkt obstakel, maar voor nieuwbouwwijken is netuitbreiding noodzakelijk. In gebieden met ernstige netcongestie kan dit een vertraging van meerdere jaren opleveren voor grotere ontwikkelingen.",
+
+  "Bodemgesteldheid":
+    "De bodemgesteldheid zegt iets over de grondsoort en het draagvermogen. Klei en veen zijn slappe gronden waarbij diepere funderingen nodig zijn — dit maakt bouwen duurder. Zandgrond en rivierklei zijn steviger en gunstiger. De bodemkwaliteit bepaalt mede of er kostbare grondverbetering nodig is voordat gebouwd kan worden.",
+
+  "Gemeentelijke woonvisie":
+    "Een woonvisie is een gemeentelijk beleidsplan over hoeveel woningen er nog nodig zijn en welk type. Een gemeente die in haar woonvisie aangeeft dat er te weinig woningen zijn en dat uitbreiding gewenst is, staat veel vaker open voor een bestemmingswijziging. Heeft de gemeente al voldoende woningbouwlocaties ingepland, dan neemt de kans op goedkeuring af.",
+
+  "Geluidshinder":
+    "Als een perceel dicht bij een drukke weg, spoorlijn of industrieterrein ligt, geldt er een geluidscontour: een zone waarbinnen de geluidsoverlast te hoog is voor woningbouw. Binnen die zone zijn extra maatregelen nodig, zoals geluidsisolatie of een geluidswal, of is bouwen soms helemaal niet toegestaan. Hoe verder het perceel van drukke wegen af, hoe kleiner dit probleem.",
+
+  "Erfgoed & beschermd gezicht":
+    "Als een perceel in of vlak naast een beschermd dorps- of stadsgezicht ligt, gelden extra regels voor de uitstraling van nieuwe gebouwen. Een rijks- of gemeentelijk monument in de buurt betekent dat plannen worden getoetst door de Rijksdienst voor het Cultureel Erfgoed (RCE) of de gemeentelijke monumentencommissie. Dit verlengt de procedure, maar is zelden een absolute blokkade.",
+
+  "Gemeentelijke woningbouwactiviteit":
+    "Dit geeft aan hoe actief een gemeente is met het toevoegen van nieuwe woningen, op basis van CBS-data over afgegeven bouwvergunningen en opgeleverde woningen. Een actieve gemeente heeft betere planprocessen, meer ervaring met bestemmingswijzigingen en is politiek vaker geneigd nieuwe locaties te beoordelen.",
+};
 
 function formatToelichting(tekst: string) {
   return tekst.replace(/ — ([a-z])/g, (_, c) => `. ${c.toUpperCase()}`).replace(/ — /g, ". ");
@@ -223,6 +261,15 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
   const [modalOpen, setModalOpen] = useState(false);
   const [weergave, setWeergave] = useState<"lijst" | "radar">("lijst");
   const [geselecteerdIndex, setGeselecteerdIndex] = useState(0);
+  const [openFactoren, setOpenFactoren] = useState<Set<string>>(new Set());
+
+  function toggleFactor(naam: string) {
+    setOpenFactoren((prev) => {
+      const next = new Set(prev);
+      next.has(naam) ? next.delete(naam) : next.add(naam);
+      return next;
+    });
+  }
 
   const radarData = factoren.map((f) => ({
     factor: kortNaam(f.naam),
@@ -391,6 +438,8 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
           <div style={{ display: "flex", flexDirection: "column", gap: "2.5rem" }}>
             {factoren.map((factor) => {
               const heeftBronnen = (factor.bronnen?.length ?? 0) > 0;
+              const uitleg = FACTOR_UITLEG[factor.naam];
+              const isOpen = openFactoren.has(factor.naam);
 
               return (
                 <div key={factor.naam}>
@@ -443,6 +492,28 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
                           </div>
                         )
                         : heeftBronnen && <BronChips bronnen={factor.bronnen!} />}
+
+                      {uitleg && (
+                        <div style={{ marginTop: "0.625rem" }}>
+                          <button
+                            onClick={() => toggleFactor(factor.naam)}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                              background: "none", border: "none", padding: 0, cursor: "pointer",
+                              fontSize: "0.75rem", color: "#525252", fontFamily: "inherit",
+                            }}
+                          >
+                            {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            {isOpen ? "Minder uitleg" : "Wat betekent dit?"}
+                          </button>
+
+                          {isOpen && (
+                            <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.5rem", lineHeight: 1.5 }}>
+                              {uitleg}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
