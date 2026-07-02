@@ -120,11 +120,12 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
         const L2 = leafletRef.current;
         const layer = L2.geoJSON(geojson, {
           style: {
-            color: geselecteerd ? "#0f62fe" : stroke,
+            color: geselecteerd ? "#0f62fe" : "#ffffff",
             weight: geselecteerd ? 3 : 2,
             fillColor: geselecteerd ? "#0f62fe" : fill,
-            fillOpacity: geselecteerd ? 0.25 : 0.15,
-            dashArray: geselecteerd ? undefined : "4 3",
+            fillOpacity: geselecteerd ? 0.3 : 0.12,
+            dashArray: geselecteerd ? undefined : "5 4",
+            opacity: 0.9,
           },
         }).on("click", () => onSelectRef.current(p.id));
         layer.addTo(mapRef.current);
