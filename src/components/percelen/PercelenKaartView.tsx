@@ -252,7 +252,7 @@ export function PercelenKaartView() {
                   {/* Financiële samenvatting */}
                   <div style={{ display: "flex", gap: "1rem", fontSize: "0.75rem", marginBottom: "0.625rem" }}>
                     <div>
-                      <div style={{ color: "#525252" }}>Aankoop</div>
+                      <div style={{ color: "#525252" }}>Grondwaarde</div>
                       <div style={{ fontWeight: 600, color: "#161616" }}>{eur(p.geschatteAankoopprijs)}</div>
                     </div>
                     <div>
