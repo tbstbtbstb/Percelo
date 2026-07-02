@@ -486,7 +486,7 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
                             onClick={() => toggleFactor(factor.naam)}
                             style={{
                               display: "inline-flex", alignItems: "center", gap: "0.25rem",
-                              background: "none", border: "none", padding: 0, cursor: "pointer",
+                              background: "none", border: "none", padding: "0.25rem 0", cursor: "pointer",
                               fontSize: "0.75rem", color: "#525252", fontFamily: "inherit",
                             }}
                           >
