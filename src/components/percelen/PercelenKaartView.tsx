@@ -48,7 +48,6 @@ export function PercelenKaartView() {
   const [filterProvincie, setFilterProvincie] = useState("");
   const [filterMinMarge, setFilterMinMarge] = useState(0);
 
-  const MIN_SCORE = 68;
   const TOP_N = filterProvincie ? 50 : 250;
   const [openEigenaarId, setOpenEigenaarId] = useState<string | null>(null);
 
@@ -68,12 +67,11 @@ export function PercelenKaartView() {
         IS_TRANSFORMABEL_RE.test(p.bestemming) &&
         !p.reedsBouwgrond &&
         (!filterProvincie || p.provincie === filterProvincie) &&
-        p.slagingskans >= MIN_SCORE &&
         p.margeMin >= filterMinMarge * 1000
       )
       .sort((a, b) => b.slagingskans - a.slagingskans)
       .slice(0, TOP_N),
-    [filterProvincie, filterMinMarge, MIN_SCORE, TOP_N]
+    [filterProvincie, filterMinMarge, TOP_N]
   );
 
   const handleSelectPin = useCallback((id: string) => {
