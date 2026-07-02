@@ -199,7 +199,7 @@ export function AdviesHeader({ data }: { data: AdviesKaartData }) {
             onClick={() => setOpen((o) => !o)}
             style={{
               display: "inline-flex", alignItems: "center", gap: "0.25rem",
-              background: "none", border: "none", padding: "0.25rem 0", cursor: "pointer",
+              background: "none", border: "none", padding: "0.25rem 0 0", cursor: "pointer",
               fontSize: "0.75rem", color: cfg.kleur, fontFamily: "inherit", opacity: 0.8,
             }}
           >
