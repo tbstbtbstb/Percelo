@@ -46,8 +46,10 @@ export function PercelenKaartView() {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterProvincie, setFilterProvincie] = useState("");
-  const [filterMinSlagingskans, setFilterMinSlagingskans] = useState(0);
   const [filterMinMarge, setFilterMinMarge] = useState(0);
+
+  const MIN_SCORE = 68;
+  const TOP_N = filterProvincie ? 50 : 250;
   const [openEigenaarId, setOpenEigenaarId] = useState<string | null>(null);
 
   const listRef = useRef<HTMLDivElement>(null);
@@ -66,11 +68,12 @@ export function PercelenKaartView() {
         IS_TRANSFORMABEL_RE.test(p.bestemming) &&
         !p.reedsBouwgrond &&
         (!filterProvincie || p.provincie === filterProvincie) &&
-        p.slagingskans >= filterMinSlagingskans &&
+        p.slagingskans >= MIN_SCORE &&
         p.margeMin >= filterMinMarge * 1000
       )
-      .sort((a, b) => b.slagingskans - a.slagingskans),
-    [filterProvincie, filterMinSlagingskans, filterMinMarge]
+      .sort((a, b) => b.slagingskans - a.slagingskans)
+      .slice(0, TOP_N),
+    [filterProvincie, filterMinMarge, MIN_SCORE, TOP_N]
   );
 
   const handleSelectPin = useCallback((id: string) => {
@@ -136,7 +139,7 @@ export function PercelenKaartView() {
                   Kansrijke percelen
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "#525252", marginTop: "0.125rem" }}>
-                  {gefilterd.length} gevonden · demo
+                  {gefilterd.length} gevonden · {filterProvincie ? `top 50 ${filterProvincie}` : "top 250 NL"}
                 </div>
               </div>
               <button
@@ -154,36 +157,23 @@ export function PercelenKaartView() {
               </button>
             </div>
 
+            {/* Provincie-dropdown — altijd zichtbaar */}
+            <div style={{ marginTop: "0.75rem" }}>
+              <Select
+                id="filter-provincie-kaart"
+                labelText=""
+                hideLabel
+                size="sm"
+                value={filterProvincie}
+                onChange={(e) => setFilterProvincie(e.target.value)}
+              >
+                <SelectItem value="" text="Alle provincies — top 250 NL" />
+                {provincies.map((p) => <SelectItem key={p} value={p} text={`${p} — top 50`} />)}
+              </Select>
+            </div>
+
             {filterOpen && (
-              <div style={{ marginTop: "0.875rem", display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-                <Select
-                  id="filter-provincie-kaart"
-                  labelText="Provincie"
-                  size="lg"
-                  value={filterProvincie}
-                  onChange={(e) => setFilterProvincie(e.target.value)}
-                >
-                  <SelectItem value="" text="Alle provincies" />
-                  {provincies.map((p) => <SelectItem key={p} value={p} text={p} />)}
-                </Select>
-                <div>
-                  <label htmlFor="filter-slagingskans-kaart" style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#525252", marginBottom: "0.25rem" }}>
-                    Min. slagingskans (%)
-                  </label>
-                  <input
-                    id="filter-slagingskans-kaart"
-                    type="number"
-                    min={0} max={100}
-                    value={filterMinSlagingskans}
-                    onChange={(e) => setFilterMinSlagingskans(Number(e.target.value) || 0)}
-                    style={{
-                      width: "100%", height: "3rem", padding: "0 0.75rem",
-                      fontSize: "0.875rem", color: "#161616",
-                      backgroundColor: "#ffffff", borderRadius: "4px",
-                      outline: "1px solid #e0e0e0", border: "none",
-                    }}
-                  />
-                </div>
+              <div style={{ marginTop: "0.625rem", display: "flex", flexDirection: "column", gap: "0.625rem" }}>
                 <div>
                   <label htmlFor="filter-marge-kaart" style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#525252", marginBottom: "0.25rem" }}>
                     Min. marge (×€1.000)
