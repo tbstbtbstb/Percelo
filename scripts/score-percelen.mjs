@@ -161,18 +161,30 @@ function berekenFinancieel(provincie, oppervlakteM2, slagingskans) {
 }
 
 // ─── Hoofdlogica ─────────────────────────────────────────────────────────────
-const bestaand = existsSync(OUTPUT) ? JSON.parse(readFileSync(OUTPUT, "utf8")) : [];
-const alGescoord = new Set(bestaand.map((p) => `${p.lat},${p.lon}`));
-const resterend = SEEDS.filter((s) => !alGescoord.has(`${s.lat},${s.lon}`));
+const HERSCORE_DAGEN = 30;
+const nu = Date.now();
 
-console.log(`\n🌍 ${SEEDS.length} seed-percelen | ${bestaand.length} al gescoord | ${resterend.length} te doen\n`);
+const bestaand = existsSync(OUTPUT) ? JSON.parse(readFileSync(OUTPUT, "utf8")) : [];
+
+// Seeds met een verse score (< 30 dagen oud) overslaan
+const verseKeys = new Set(
+  bestaand
+    .filter((p) => p.gescoordOp && (nu - new Date(p.gescoordOp).getTime()) < HERSCORE_DAGEN * 86400_000)
+    .map((p) => `${p.lat},${p.lon}`)
+);
+
+const resterend = SEEDS.filter((s) => !verseKeys.has(`${s.lat},${s.lon}`));
+const isHerscore = resterend.filter((s) => bestaand.some((p) => p.lat === s.lat && p.lon === s.lon)).length;
+
+console.log(`\n🌍 ${SEEDS.length} seeds | ${bestaand.length} opgeslagen | ${resterend.length} te scoren (${isHerscore} her-scores)\n`);
 
 if (resterend.length === 0) {
-  console.log("✅ Alles al gescoord. Klaar!");
+  console.log("✅ Alle scores zijn vers. Klaar!");
   process.exit(0);
 }
 
-let aantalGoed = bestaand.length;
+const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^landelijk/i;
+let aantalGoed = 0;
 let aantalOvergeslagen = 0;
 
 for (let i = 0; i < resterend.length; i += 5) {
@@ -196,31 +208,24 @@ for (let i = 0; i < resterend.length; i += 5) {
     continue;
   }
 
-  // Whitelist: alleen bestemmingen die transformeerbaar zijn naar wonen
-  const IS_TRANSFORMABEL_RE = /^agrarisch|^natuur|^recreatie|^landelijk/i;
-
   for (const r of resultaten) {
-    if (!r.ok || r.totaalScore < 50) {
-      aantalOvergeslagen++;
-      continue;
-    }
-    if (r.reedsBouwgrond) {
-      aantalOvergeslagen++;
-      continue;
-    }
-    if (!IS_TRANSFORMABEL_RE.test(r.huidigeBestemming ?? "")) {
-      aantalOvergeslagen++;
-      continue;
-    }
-
     const seed = batch.find((s) => s.lat === r.perceel.lat && s.lon === r.perceel.lon);
     if (!seed) continue;
+
+    // Verwijder bestaand record voor deze seed (wordt hieronder vervangen of weggelaten)
+    const bestaandIdx = bestaand.findIndex((p) => p.lat === seed.lat && p.lon === seed.lon);
+    if (bestaandIdx !== -1) bestaand.splice(bestaandIdx, 1);
+
+    if (!r.ok || r.totaalScore < 50 || r.reedsBouwgrond || !IS_TRANSFORMABEL_RE.test(r.huidigeBestemming ?? "")) {
+      aantalOvergeslagen++;
+      continue;
+    }
 
     const fin = berekenFinancieel(seed.provincie, seed.oppervlakteM2, r.totaalScore);
     aantalGoed++;
 
     bestaand.push({
-      id: String(bestaand.length + 1),
+      id: String(Date.now()) + String(Math.floor(Math.random() * 10000)),
       perceelId: `${seed.gemeente.substring(0, 3).toUpperCase()}00-X-${Math.floor(1000 + Math.random() * 9000)}`,
       straatAdres: seed.adres,
       gemeente: seed.gemeente,
@@ -237,6 +242,7 @@ for (let i = 0; i < resterend.length; i += 5) {
       bouwgrondWaardeMax: fin.bouwgrondMax,
       margeMin: fin.margeMin,
       margeMax: fin.margeMax,
+      gescoordOp: new Date().toISOString(),
     });
   }
 
@@ -246,4 +252,4 @@ for (let i = 0; i < resterend.length; i += 5) {
   if (i + 5 < resterend.length) await new Promise((r) => setTimeout(r, 3000));
 }
 
-console.log(`\n🎉 Klaar! ${aantalGoed} percelen opgeslagen, ${aantalOvergeslagen} overgeslagen (score < 50)\n`);
+console.log(`\n🎉 Klaar! ${aantalGoed} toegevoegd/bijgewerkt, ${aantalOvergeslagen} overgeslagen\n`);
