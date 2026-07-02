@@ -10,10 +10,10 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
-function kleurVoorScore(score: number): { bg: string; tekst: string } {
-  if (score >= 70) return { bg: "#d0f0da", tekst: "#0e4620" };
-  if (score >= 50) return { bg: "#fdefc3", tekst: "#5c3f00" };
-  return { bg: "#ffd7d9", tekst: "#750e13" };
+function kleurVoorScore(score: number): { bg: string; tekst: string; fill: string; stroke: string } {
+  if (score >= 70) return { bg: "#d0f0da", tekst: "#0e4620", fill: "#24a148", stroke: "#145a32" };
+  if (score >= 50) return { bg: "#fdefc3", tekst: "#5c3f00", fill: "#f1c21b", stroke: "#8a6914" };
+  return { bg: "#ffd7d9", tekst: "#750e13", fill: "#da1e28", stroke: "#750e13" };
 }
 
 function chipHtml(p: KansrijkPerceel, geselecteerd: boolean): string {
@@ -26,11 +26,38 @@ function chipHtml(p: KansrijkPerceel, geselecteerd: boolean): string {
   return `<div style="background:${bg};color:${tekst};border:none;border-radius:1000px;padding:5px 8px;font-size:13px;font-weight:700;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;box-shadow:${shadow};line-height:1;text-align:center;cursor:pointer;transform:${geselecteerd ? "scale(1.18)" : "scale(1)"};transition:transform 0.15s ease;">${p.slagingskans}%</div>`;
 }
 
+async function fetchPerceelPolygon(lat: number, lon: number): Promise<GeoJSON.FeatureCollection | null> {
+  const d = 0.0008;
+  const bbox = `${lon - d},${lat - d},${lon + d},${lat + d},EPSG:4326`;
+  const url = `https://service.pdok.nl/kadaster/kadastralekaart/wfs/v5_0?service=WFS&version=2.0.0&request=GetFeature&typeName=kadastralekaart:Perceel&outputFormat=application/json&srsName=EPSG:4326&count=5&bbox=${bbox}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.features?.length) return null;
+    // Kies het perceel waarvan het middelpunt het dichtst bij de seed-coördinaat ligt
+    const best = data.features.reduce((prev: GeoJSON.Feature, cur: GeoJSON.Feature) => {
+      const dist = (f: GeoJSON.Feature) => {
+        const coords = (f.geometry as GeoJSON.Polygon).coordinates[0];
+        const cx = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+        const cy = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+        return Math.hypot(cx - lon, cy - lat);
+      };
+      return dist(cur) < dist(prev) ? cur : prev;
+    });
+    return { type: "FeatureCollection", features: [best] };
+  } catch {
+    return null;
+  }
+}
+
 export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const markersRef = useRef<Map<string, import("leaflet").Marker>>(new Map());
+  const polygonLayersRef = useRef<Map<string, import("leaflet").GeoJSON>>(new Map());
+  const polygonCacheRef = useRef<Map<string, GeoJSON.FeatureCollection | null>>(new Map());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const [mapReady, setMapReady] = useState(false);
@@ -69,8 +96,51 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
       mapRef.current = null;
       leafletRef.current = null;
       markersRef.current.clear();
+      polygonLayersRef.current.clear();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Polygonen laden en tekenen
+  useEffect(() => {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!mapReady || !L || !map) return;
+
+    // Verwijder bestaande polygonen
+    polygonLayersRef.current.forEach((layer) => layer.remove());
+    polygonLayersRef.current.clear();
+
+    percelen.forEach((p) => {
+      const cacheKey = `${p.lat},${p.lon}`;
+      const geselecteerd = p.id === geselecteerdId;
+      const { fill, stroke } = kleurVoorScore(p.slagingskans);
+
+      const tekenPolygon = (geojson: GeoJSON.FeatureCollection | null) => {
+        if (!geojson || !mapRef.current || !leafletRef.current) return;
+        const L2 = leafletRef.current;
+        const layer = L2.geoJSON(geojson, {
+          style: {
+            color: geselecteerd ? "#0f62fe" : stroke,
+            weight: geselecteerd ? 3 : 2,
+            fillColor: geselecteerd ? "#0f62fe" : fill,
+            fillOpacity: geselecteerd ? 0.25 : 0.15,
+            dashArray: geselecteerd ? undefined : "4 3",
+          },
+        }).on("click", () => onSelectRef.current(p.id));
+        layer.addTo(mapRef.current);
+        polygonLayersRef.current.set(p.id, layer);
+      };
+
+      if (polygonCacheRef.current.has(cacheKey)) {
+        tekenPolygon(polygonCacheRef.current.get(cacheKey)!);
+      } else {
+        fetchPerceelPolygon(p.lat, p.lon).then((geojson) => {
+          polygonCacheRef.current.set(cacheKey, geojson);
+          tekenPolygon(geojson);
+        });
+      }
+    });
+  }, [mapReady, percelen, geselecteerdId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Markers bijwerken bij wijziging percelen of selectie
   useEffect(() => {
@@ -78,7 +148,6 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
     const map = mapRef.current;
     if (!mapReady || !L || !map) return;
 
-    // Verwijder bestaande markers
     markersRef.current.forEach((m) => m.remove());
     markersRef.current.clear();
 
@@ -105,7 +174,7 @@ export default function KaartMetPins({ percelen, geselecteerdId, onSelect }: Pro
   useEffect(() => {
     if (!geselecteerdId || !mapRef.current) return;
     const p = percelen.find((x) => x.id === geselecteerdId);
-    if (p) mapRef.current.setView([p.lat, p.lon], 14, { animate: true });
+    if (p) mapRef.current.setView([p.lat, p.lon], 17, { animate: true });
   }, [geselecteerdId, percelen]);
 
   return <div ref={containerRef} style={{ height: "100%", width: "100%" }} />;
