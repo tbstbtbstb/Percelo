@@ -28,8 +28,9 @@ function chipHtml(p: KansrijkPerceel, geselecteerd: boolean): string {
 
 async function fetchPerceelPolygon(lat: number, lon: number): Promise<GeoJSON.FeatureCollection | null> {
   const d = 0.0008;
-  const bbox = `${lon - d},${lat - d},${lon + d},${lat + d},EPSG:4326`;
-  const url = `https://service.pdok.nl/kadaster/kadastralekaart/wfs/v5_0?service=WFS&version=2.0.0&request=GetFeature&typeName=kadastralekaart:Perceel&outputFormat=application/json&srsName=CRS:84&count=5&bbox=${bbox}`;
+  // WFS 2.0 met EPSG:4326: bbox in lat/lon volgorde (niet lon/lat)
+  const bbox = `${lat - d},${lon - d},${lat + d},${lon + d},EPSG:4326`;
+  const url = `https://service.pdok.nl/kadaster/kadastralekaart/wfs/v5_0?service=WFS&version=2.0.0&request=GetFeature&typeName=kadastralekaart:Perceel&outputFormat=application/json&srsName=EPSG:4326&count=5&bbox=${bbox}`;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
