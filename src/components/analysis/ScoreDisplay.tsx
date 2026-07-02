@@ -52,32 +52,41 @@ function kortNaam(naam: string) {
 }
 
 const FACTOR_UITLEG: Record<string, string> = {
-  "Bestemmingsplan":
+  "Huidig bestemmingsplan":
     "Het bestemmingsplan legt per perceel vast wat er mag: wonen, landbouw, natuur, bedrijf, enzovoort. Een perceel met een agrarische bestemming heeft de meeste kans op omzetting naar wonen, zeker als het grenst aan bestaande bebouwing. Een perceel met een natuur- of waterbestemming heeft minder kans, tenzij de gemeente al bezig is met een planwijziging.",
 
-  "Afstand tot bebouwde kom":
-    "Percelen die direct grenzen aan of dicht bij een bestaande woonwijk liggen, worden door gemeenten gezien als een 'logische uitbreiding'. Hoe verder een perceel van de bebouwde kom af ligt, hoe meer onderbouwing een gemeente vraagt — het wordt dan moeilijker om aan te tonen waarom juist op die plek gebouwd moet worden.",
+  "Woningmarktdruk":
+    "Woningmarktdruk geeft aan hoe groot het tekort aan woningen is in een gemeente. In gebieden waar de vraag naar woningen veel groter is dan het aanbod, staan gemeenten en provincies meer open voor nieuwe bouwlocaties. Een hoge druk vergroot de kans dat een bestemmingswijziging politiek en beleidsmatig wordt goedgekeurd.",
 
   "Provinciale omgevingsvisie":
     "Elke provincie heeft een omgevingsvisie: een langetermijnplan dat aangeeft welke gebieden geschikt zijn voor woningbouw, landbouw of natuur. Als de provincie een perceel aanwijst als zoekgebied voor woningbouw, vergroot dit de kans op goedkeuring aanzienlijk. Staat het gebied aangemerkt als 'geen verstedelijking', dan is een wijziging veel moeilijker door te voeren.",
 
-  "Natura 2000 nabijheid":
-    "Natura 2000 is een Europees netwerk van beschermde natuur- en leefgebieden voor zeldzame planten en dieren. Ligt een perceel dicht bij zo'n gebied, dan moet bij een bouwplan worden aangetoond dat de werkzaamheden de natuur niet schaden. Dit gebeurt via een AERIUS-berekening: een computerprogramma dat berekent hoeveel stikstof een bouwproject uitstoot en of dat de nabijgelegen natuur verslechtert. Hoe verder het perceel van een Natura 2000-gebied, hoe eenvoudiger de procedure.",
+  "Natura2000 & stikstof":
+    "Natura 2000 is een Europees netwerk van beschermde natuur- en leefgebieden voor zeldzame planten en dieren. Ligt een perceel dicht bij zo'n gebied, dan moet bij een bouwplan worden aangetoond dat de werkzaamheden de natuur niet schaden. Dit gebeurt via een AERIUS-berekening: een computerprogramma dat uitrekent hoeveel stikstof een bouwproject uitstoot en of dat de nabijgelegen natuur verslechtert. Hoe verder het perceel van een Natura 2000-gebied, hoe eenvoudiger de procedure.",
 
-  "Nationaal Natuur Netwerk":
-    "Het Nationaal Natuur Netwerk (NNN) is een groot aaneengesloten netwerk van beschermde natuurgebieden in Nederland, vastgelegd door de provincies. Percelen die volledig binnen het NNN liggen, mogen in principe niet bebouwd worden. Ligt een perceel in de buurt maar er niet in, dan kan er soms nog wel gebouwd worden, maar vraagt de provincie een extra motivering.",
+  "Nutsvoorzieningen & infrastructuur":
+    "Voordat er gebouwd kan worden, moeten riolering, water, gas en elektriciteit beschikbaar zijn. Als een perceel ver van bestaande aansluitpunten ligt, zijn extra aanlegkosten nodig. Ook de bereikbaarheid via wegen en fietspaden speelt een rol: een perceel zonder goede ontsluiting vereist extra investeringen die de haalbaarheid van een project beïnvloeden.",
 
   "Historische precedenten":
     "Een bestemmingswijziging die eerder al is toegestaan in dezelfde gemeente, werkt in uw voordeel. Het toont aan dat de gemeente bereid is om agrarische grond om te zetten naar woonbestemming. Hoe meer vergelijkbare gevallen zijn goedgekeurd, hoe sterker uw onderbouwing bij een nieuwe aanvraag.",
 
-  "Netcongestie regio":
-    "In delen van Nederland is het elektriciteitsnet zo vol dat netbeheerders als Liander of Stedin tijdelijk geen nieuwe aansluitingen kunnen realiseren. Voor individuele woningbouw is dit nu een beperkt obstakel, maar voor nieuwbouwwijken is netuitbreiding noodzakelijk. In gebieden met ernstige netcongestie kan dit een vertraging van meerdere jaren opleveren voor grotere ontwikkelingen.",
+  "Ladder duurzame verstedelijking":
+    "De Ladder voor duurzame verstedelijking is een wettelijke verplichting: bij elke nieuwe woonlocatie moet worden aangetoond dat er werkelijk behoefte is aan die woningen én dat er geen geschikte locaties binnen bestaand bebouwd gebied beschikbaar zijn. Hoe beter een perceel aan deze criteria voldoet — door de aantoonbare woningvraag en de ligging buiten de kern — hoe sterker de motivering die ingediend kan worden.",
 
-  "Bodemgesteldheid":
-    "De bodemgesteldheid zegt iets over de grondsoort en het draagvermogen. Klei en veen zijn slappe gronden waarbij diepere funderingen nodig zijn — dit maakt bouwen duurder. Zandgrond en rivierklei zijn steviger en gunstiger. De bodemkwaliteit bepaalt mede of er kostbare grondverbetering nodig is voordat gebouwd kan worden.",
+  "Grondwater & bodemrisico":
+    "De bodemgesteldheid zegt iets over de grondsoort en het grondwaterpeil. Klei en veen zijn slappe gronden waarbij diepere funderingen nodig zijn — dit maakt bouwen duurder. Een hoog grondwaterpeil kan problemen geven met kelders en kruipruimtes. Zandgrond en rivierklei zijn steviger en gunstiger voor bouwplannen.",
 
-  "Gemeentelijke woonvisie":
-    "Een woonvisie is een gemeentelijk beleidsplan over hoeveel woningen er nog nodig zijn en welk type. Een gemeente die in haar woonvisie aangeeft dat er te weinig woningen zijn en dat uitbreiding gewenst is, staat veel vaker open voor een bestemmingswijziging. Heeft de gemeente al voldoende woningbouwlocaties ingepland, dan neemt de kans op goedkeuring af.",
+  "Netcongestie elektriciteit":
+    "In delen van Nederland is het elektriciteitsnet zo vol dat netbeheerders als Liander of Stedin tijdelijk geen nieuwe aansluitingen kunnen realiseren. Voor individuele woningbouw is dit nu een beperkt obstakel, maar voor nieuwbouwwijken is netuitbreiding noodzakelijk. In gebieden met ernstige netcongestie kan dit een vertraging van meerdere jaren opleveren.",
+
+  "Natuur Netwerk Nederland (NNN)":
+    "Het Natuur Netwerk Nederland (NNN) is een groot aaneengesloten netwerk van beschermde natuurgebieden, vastgelegd door de provincies. Percelen die volledig binnen het NNN liggen, mogen in principe niet bebouwd worden. Ligt een perceel in de buurt maar er niet in, dan kan er soms nog wel gebouwd worden, maar vraagt de provincie een stevige extra motivering.",
+
+  "Watertoets":
+    "De watertoets is een verplichte stap bij ruimtelijke plannen: het waterschap beoordeelt of een bouwplan geen negatieve gevolgen heeft voor waterafvoer, waterberging of overstromingsrisico. In laaggelegen poldergebieden of gebieden met veel regenval is dit een kritischer factor. Een positieve watertoets is een vereiste voordat een bestemmingsplan kan worden vastgesteld.",
+
+  "Leeftijd bestemmingsplan":
+    "Een oud bestemmingsplan — ouder dan tien jaar — vergroot de kans op een succesvolle wijziging. Gemeenten zijn wettelijk verplicht om bestemmingsplannen actueel te houden, en bij een herziening worden nieuwe inzichten over woningbehoefte meegenomen. Een recent vastgesteld bestemmingsplan is moeilijker aan te passen, omdat de gemeente net een bewuste keuze heeft gemaakt.",
 
   "Geluidshinder":
     "Als een perceel dicht bij een drukke weg, spoorlijn of industrieterrein ligt, geldt er een geluidscontour: een zone waarbinnen de geluidsoverlast te hoog is voor woningbouw. Binnen die zone zijn extra maatregelen nodig, zoals geluidsisolatie of een geluidswal, of is bouwen soms helemaal niet toegestaan. Hoe verder het perceel van drukke wegen af, hoe kleiner dit probleem.",
@@ -85,8 +94,8 @@ const FACTOR_UITLEG: Record<string, string> = {
   "Erfgoed & beschermd gezicht":
     "Als een perceel in of vlak naast een beschermd dorps- of stadsgezicht ligt, gelden extra regels voor de uitstraling van nieuwe gebouwen. Een rijks- of gemeentelijk monument in de buurt betekent dat plannen worden getoetst door de Rijksdienst voor het Cultureel Erfgoed (RCE) of de gemeentelijke monumentencommissie. Dit verlengt de procedure, maar is zelden een absolute blokkade.",
 
-  "Gemeentelijke woningbouwactiviteit":
-    "Dit geeft aan hoe actief een gemeente is met het toevoegen van nieuwe woningen, op basis van CBS-data over afgegeven bouwvergunningen en opgeleverde woningen. Een actieve gemeente heeft betere planprocessen, meer ervaring met bestemmingswijzigingen en is politiek vaker geneigd nieuwe locaties te beoordelen.",
+  "Gemeentelijke woonvisie":
+    "Een woonvisie is een gemeentelijk beleidsplan over hoeveel woningen er nog nodig zijn en welk type. Een gemeente die in haar woonvisie aangeeft dat er te weinig woningen zijn en dat uitbreiding gewenst is, staat veel vaker open voor een bestemmingswijziging. Heeft de gemeente al voldoende woningbouwlocaties ingepland, dan neemt de kans op goedkeuring af.",
 };
 
 function formatToelichting(tekst: string) {
@@ -471,6 +480,28 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
                         {renderToelichting(factor.toelichting)}
                       </p>
 
+                      {uitleg && (
+                        <div style={{ marginTop: "0.375rem" }}>
+                          <button
+                            onClick={() => toggleFactor(factor.naam)}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: "0.25rem",
+                              background: "none", border: "none", padding: 0, cursor: "pointer",
+                              fontSize: "0.75rem", color: "#525252", fontFamily: "inherit",
+                            }}
+                          >
+                            {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            {isOpen ? "Minder uitleg" : "Wat betekent dit?"}
+                          </button>
+
+                          {isOpen && (
+                            <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.375rem", lineHeight: 1.5 }}>
+                              {uitleg}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.625rem" }}>
                         <div style={{ flex: 1, height: "5px", backgroundColor: "#f4f4f4", borderRadius: "999px", overflow: "hidden" }}>
                           <div style={{ height: "100%", width: `${factor.score}%`, backgroundColor: factorKleur(factor.score), borderRadius: "999px", transition: "width 0.5s cubic-bezier(0.4, 0, 0.2, 1)" }} />
@@ -492,28 +523,6 @@ export function ScoreFactoren({ scoreKlasse, factoren, precedentPlannen = [], ge
                           </div>
                         )
                         : heeftBronnen && <BronChips bronnen={factor.bronnen!} />}
-
-                      {uitleg && (
-                        <div style={{ marginTop: "0.625rem" }}>
-                          <button
-                            onClick={() => toggleFactor(factor.naam)}
-                            style={{
-                              display: "inline-flex", alignItems: "center", gap: "0.25rem",
-                              background: "none", border: "none", padding: 0, cursor: "pointer",
-                              fontSize: "0.75rem", color: "#525252", fontFamily: "inherit",
-                            }}
-                          >
-                            {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            {isOpen ? "Minder uitleg" : "Wat betekent dit?"}
-                          </button>
-
-                          {isOpen && (
-                            <p style={{ fontSize: "0.875rem", color: "var(--cds-text-secondary, #525252)", marginTop: "0.5rem", lineHeight: 1.5 }}>
-                              {uitleg}
-                            </p>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
