@@ -193,6 +193,48 @@ const s = StyleSheet.create({
   },
   disclaimerTekst: { fontSize: 7, color: C.muted, lineHeight: 1.55 },
 
+  // Waardestijging onderbouwing
+  waardHeroBlok: { backgroundColor: "#edf5ff", borderRadius: 6, padding: 16, marginBottom: 8 },
+  waardHeroLabel: { fontSize: 7, fontFamily: "Helvetica-Bold", color: "#0043ce", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 },
+  waardHeroGetal: { fontSize: 30, fontFamily: "Helvetica-Bold", color: "#0043ce", lineHeight: 1.1 },
+  waardHeroMax:   { fontSize: 10, color: "#4d6fa0", marginTop: 3 },
+  waardHeroSub:   { fontSize: 7.5, color: "#4d6fa0", marginTop: 6 },
+
+  waardTweekolomBlok: { flexDirection: "row", marginBottom: 8 },
+  waardKolom: { flex: 1, borderRadius: 6, padding: 12 },
+
+  waardRegelRij: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start",
+    paddingTop: 6, paddingBottom: 6,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+  },
+  waardRegelLinks: { flex: 1, marginRight: 8 },
+  waardRegelLabel: { fontSize: 8.5, color: C.secondary },
+  waardRegelSub:   { fontSize: 7, color: C.muted, marginTop: 1 },
+  waardRegelWaarde: { fontSize: 9, fontFamily: "Helvetica-Bold", textAlign: "right", flexShrink: 0 },
+  waardTotaalRij: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    paddingTop: 8, marginTop: 2,
+  },
+  waardTotaalLabel: { fontSize: 9, fontFamily: "Helvetica-Bold" },
+  waardTotaalWaarde: { fontSize: 11, fontFamily: "Helvetica-Bold", color: "#0043ce" },
+
+  bronTitelRij: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    marginBottom: 6,
+  },
+  bronRij: {
+    flexDirection: "row", alignItems: "flex-start",
+    paddingTop: 6, paddingBottom: 6,
+    borderBottomWidth: 1, borderBottomColor: C.border,
+  },
+  bronLabel: { fontSize: 8, fontFamily: "Helvetica-Bold", width: 130, marginRight: 8, flexShrink: 0 },
+  bronUitleg: { fontSize: 7.5, color: C.secondary, flex: 1, lineHeight: 1.45 },
+  bronDatum:  { fontSize: 7, color: C.muted, marginLeft: 6, flexShrink: 0 },
+
+  betrouwMeter: { height: 5, backgroundColor: C.border, borderRadius: 3, marginTop: 4, marginBottom: 2 },
+  betrouwFill:  { height: 5, borderRadius: 3 },
+
   // Footer
   footer: {
     position: "absolute", bottom: 14, left: 36, right: 36,
@@ -437,10 +479,175 @@ export function AnalysePDF({ data }: { data: AnalyseResultaat }) {
         <PageFooter datum={datum} analyseId={data.analyseId} />
       </Page>
 
-      {/* ══ PAGINA 3: Onderzoeken + Rapport ════════════════════════════════ */}
+      {/* ══ PAGINA 3: Waardestijging onderbouwing ══════════════════════════ */}
       <Page size="A4" style={s.page}>
         <View style={[s.header, { paddingTop: 18, paddingBottom: 14 }]}>
-          <Text style={s.headerBrand}>PERCELO — ONDERZOEKEN & RAPPORT</Text>
+          <Text style={s.headerBrand}>PERCELO — WAARDESTIJGING ONDERBOUWING</Text>
+          <Text style={[s.headerSub, { color: C.muted, marginTop: 4 }]}>
+            {data.perceel.adres} · {subTitel} · Basisscenario (neutraal)
+          </Text>
+        </View>
+
+        <View style={s.content}>
+          {/* Betrouwbaarheid */}
+          <View style={{ marginBottom: 14 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
+              <Text style={{ fontSize: 7.5, color: C.secondary }}>Betrouwbaarheid berekening</Text>
+              <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.secondary }}>
+                {data.waardestijging.betrouwbaarheid}/100 — {data.waardestijging.betrouwbaarheidLabel}
+              </Text>
+            </View>
+            <View style={s.betrouwMeter}>
+              <View style={[s.betrouwFill, {
+                width: `${data.waardestijging.betrouwbaarheid}%`,
+                backgroundColor: data.waardestijging.betrouwbaarheid >= 80 ? C.green : data.waardestijging.betrouwbaarheid >= 60 ? C.yellow : C.red,
+              }]} />
+            </View>
+            <Text style={{ fontSize: 7, color: C.muted }}>
+              Op basis van: perceelgrootte (BRK){data.waardestijging.bodemtype && data.waardestijging.bodemtype !== "onbekend" ? `, bodemtype (BRO)` : ""}{data.waardestijging.afstandTotKernNaam && data.waardestijging.afstandTotKernNaam !== "onbekend" ? `, afstand tot kern (PDOK)` : ""}{data.waardestijging.wozWaarde ? `, WOZ-waarde (Kadaster)` : ""}
+            </Text>
+          </View>
+
+          {/* Hero: maximale verwervingsprijs */}
+          {(() => {
+            const m2 = data.waardestijging.perceelM2 ?? 2500;
+            const bouwMin = m2 * data.waardestijging.bouwgrondPrijsPerM2Min;
+            const bouwMax = m2 * data.waardestijging.bouwgrondPrijsPerM2Max;
+            const maxVerwMin = bouwMin - data.waardestijging.conversiekostenMax;
+            const maxVerwMax = bouwMax - data.waardestijging.conversiekostenMin;
+            // Conservatief: bouwgrond ×0.85, kosten ×1.25
+            const consMaxVerw = (bouwMin * 0.85) - (data.waardestijging.conversiekostenMax * 1.25);
+            const nettoMin = maxVerwMin - data.waardestijging.agrarischeMarktwaarde;
+            const nettoMax = maxVerwMax - data.waardestijging.agrarischeMarktwaarde;
+
+            return (
+              <>
+                {/* Twee kolommen: basisscenario + conservatief */}
+                <View style={s.waardTweekolomBlok}>
+                  <View style={[s.waardKolom, { backgroundColor: "#edf5ff", marginRight: 6 }]}>
+                    <Text style={s.waardHeroLabel}>Basisscenario</Text>
+                    <Text style={s.waardHeroGetal}>{eur(maxVerwMin)}</Text>
+                    <Text style={s.waardHeroMax}>tot {eur(maxVerwMax)}</Text>
+                    <Text style={s.waardHeroSub}>Maximale verwervingsprijs</Text>
+                  </View>
+                  <View style={[s.waardKolom, { backgroundColor: C.redBg }]}>
+                    <Text style={[s.waardHeroLabel, { color: C.red }]}>Conservatief (−15% / +25%)</Text>
+                    <Text style={[s.waardHeroGetal, { color: C.red, fontSize: 22 }]}>{eur(consMaxVerw)}</Text>
+                    <Text style={[s.waardHeroMax, { color: "#b91c1c", fontSize: 8 }]}>Harde ondergrens voor bieding</Text>
+                    <Text style={[s.waardHeroSub, { color: "#b91c1c" }]}>Bouwgrond −15%, kosten +25%</Text>
+                  </View>
+                </View>
+
+                {/* Opbouw tabel */}
+                <Text style={s.sectieKop}>Opbouw berekening — basisscenario</Text>
+                <View style={s.waardRegelRij}>
+                  <View style={s.waardRegelLinks}>
+                    <Text style={s.waardRegelLabel}>Bouwgrondwaarde na conversie</Text>
+                    <Text style={s.waardRegelSub}>
+                      {m2.toLocaleString("nl-NL")} m² × €{data.waardestijging.bouwgrondPrijsPerM2Min}–{data.waardestijging.bouwgrondPrijsPerM2Max}/m² ({data.waardestijging.regio}{data.waardestijging.aanpassingsPct !== undefined && data.waardestijging.aanpassingsPct !== 0 ? `, locatie-aanpassing ${data.waardestijging.aanpassingsPct > 0 ? "+" : ""}${data.waardestijging.aanpassingsPct}%` : ""})
+                    </Text>
+                  </View>
+                  <Text style={[s.waardRegelWaarde, { color: C.green }]}>{eur(bouwMin)} – {eur(bouwMax)}</Text>
+                </View>
+                <View style={s.waardRegelRij}>
+                  <View style={s.waardRegelLinks}>
+                    <Text style={s.waardRegelLabel}>Totale conversiekosten</Text>
+                    <Text style={s.waardRegelSub}>Procedures, onderzoeken, leges — zie kostenoverzicht</Text>
+                  </View>
+                  <Text style={[s.waardRegelWaarde, { color: C.yellow }]}>−{eur(data.waardestijging.conversiekostenMin)} – −{eur(data.waardestijging.conversiekostenMax)}</Text>
+                </View>
+                <View style={s.waardTotaalRij}>
+                  <Text style={s.waardTotaalLabel}>= Maximale verwervingsprijs</Text>
+                  <Text style={s.waardTotaalWaarde}>{eur(maxVerwMin)} – {eur(maxVerwMax)}</Text>
+                </View>
+
+                {/* Netto voor eigenaar */}
+                <Text style={[s.sectieKop, { marginTop: 14 }]}>Netto waardestijging — huidige eigenaar</Text>
+                <View style={s.waardRegelRij}>
+                  <View style={s.waardRegelLinks}>
+                    <Text style={s.waardRegelLabel}>Maximale verwervingsprijs</Text>
+                  </View>
+                  <Text style={s.waardRegelWaarde}>{eur(maxVerwMin)} – {eur(maxVerwMax)}</Text>
+                </View>
+                <View style={s.waardRegelRij}>
+                  <View style={s.waardRegelLinks}>
+                    <Text style={s.waardRegelLabel}>Agrarische marktwaarde perceel</Text>
+                    <Text style={s.waardRegelSub}>{eur(data.waardestijging.agrarischPrijsPerHa)}/ha · {data.waardestijging.provincie} · BIS Grondmarkt</Text>
+                  </View>
+                  <Text style={[s.waardRegelWaarde, { color: C.secondary }]}>−{eur(data.waardestijging.agrarischeMarktwaarde)}</Text>
+                </View>
+                <View style={s.waardTotaalRij}>
+                  <Text style={s.waardTotaalLabel}>= Netto waardestijging</Text>
+                  <Text style={[s.waardTotaalWaarde, { color: nettoMax > 0 ? C.green : C.red }]}>
+                    {eur(nettoMin)} – {eur(nettoMax)}
+                  </Text>
+                </View>
+                {data.waardestijging.wozWaarde && (
+                  <Text style={{ fontSize: 7, color: C.muted, marginTop: 6 }}>
+                    WOZ-waarde {data.waardestijging.wozPeildatum}: {eur(data.waardestijging.wozWaarde)} — niet gebruikt als basis (agrarische WOZ ligt structureel 20–40% onder marktwaarde)
+                  </Text>
+                )}
+              </>
+            );
+          })()}
+
+          {/* Databronnen */}
+          <Text style={[s.sectieKop, { marginTop: 14 }]}>Gebruikte databronnen</Text>
+          <View style={s.bronRij}>
+            <Text style={s.bronLabel}>Agrarische grondprijs</Text>
+            <Text style={s.bronUitleg}>BIS Grondmarkt / CBS Landbouwtelling · {data.waardestijging.provincie} · {eur(data.waardestijging.agrarischPrijsPerHa)}/ha · Gemiddelde vrije verkoopprijs pachtvrij landbouwgrond</Text>
+          </View>
+          <View style={s.bronRij}>
+            <Text style={s.bronLabel}>Bouwgrondprijzen</Text>
+            <Text style={s.bronUitleg}>{data.waardestijging.databron} · {data.waardestijging.regio} · €{data.waardestijging.bouwgrondPrijsPerM2Min}–{data.waardestijging.bouwgrondPrijsPerM2Max}/m² vóór locatiecorrecties</Text>
+          </View>
+          {data.waardestijging.perceelM2 && (
+            <View style={s.bronRij}>
+              <Text style={s.bronLabel}>Perceeloppervlakte</Text>
+              <Text style={s.bronUitleg}>BRK Basisregistratie Kadaster · {(data.waardestijging.perceelM2).toLocaleString("nl-NL")} m² kadastrale grootte</Text>
+            </View>
+          )}
+          {data.waardestijging.bodemtype && data.waardestijging.bodemtype !== "onbekend" && (
+            <View style={s.bronRij}>
+              <Text style={s.bronLabel}>Bodemtype</Text>
+              <Text style={s.bronUitleg}>BRO Bodemkaart 1:50.000 (PDOK) · {data.waardestijging.bodemtype} · Correctiefactor op bouwgrondprijs toegepast</Text>
+            </View>
+          )}
+          {data.waardestijging.afstandTotKernKm !== undefined && data.waardestijging.afstandTotKernNaam && data.waardestijging.afstandTotKernNaam !== "onbekend" && (
+            <View style={s.bronRij}>
+              <Text style={s.bronLabel}>Ligging</Text>
+              <Text style={s.bronUitleg}>PDOK Locatieserver · {data.waardestijging.afstandTotKernKm} km van {data.waardestijging.afstandTotKernNaam} · Afstandscorrectie op bouwgrondprijs toegepast</Text>
+            </View>
+          )}
+          {data.waardestijging.wozWaarde && (
+            <View style={s.bronRij}>
+              <Text style={s.bronLabel}>WOZ-waarde (ref.)</Text>
+              <Text style={s.bronUitleg}>Kadaster WOZ-waardeloket · Peildatum {data.waardestijging.wozPeildatum} · {eur(data.waardestijging.wozWaarde)} · Uitsluitend ter referentie, niet als basis voor berekening</Text>
+            </View>
+          )}
+
+          {/* Professionele disclaimer */}
+          <View style={[s.disclaimerBlok, { marginTop: 12 }]}>
+            <Text style={[s.disclaimerTekst, { fontFamily: "Helvetica-Bold", marginBottom: 4 }]}>
+              Professionele disclaimer — uitsluitend voor intern gebruik en oriënterende gesprekken
+            </Text>
+            <Text style={s.disclaimerTekst}>
+              Dit onderbouwingsblad is gegenereerd door Percelo op basis van openbare databronnen (BRK, PDOK, BRO, CBS, NVM/Kadaster).
+              Alle bedragen zijn indicatief en gebaseerd op regionale marktgemiddelden gecorrigeerd voor lokale factoren.
+              De berekening vervangt geen RICS-taxatierapport, NVM-taxatie of notarieel advies en mag niet worden gebruikt als formele waardebepaling,
+              bankgarantie of juridische onderbouwing. Percelo aanvaardt geen aansprakelijkheid voor beslissingen op basis van dit document.
+              Raadpleeg bij een formele bieding of transactie altijd een gecertificeerd taxateur.
+            </Text>
+          </View>
+        </View>
+
+        <PageFooter datum={datum} analyseId={data.analyseId} />
+      </Page>
+
+      {/* ══ PAGINA 4: Onderzoeken + Rapport ════════════════════════════════ */}
+      <Page size="A4" style={s.page}>
+        <View style={[s.header, { paddingTop: 18, paddingBottom: 14 }]}>
+          <Text style={s.headerBrand}>PERCELO — BENODIGDE ONDERZOEKEN & RAPPORT</Text>
           <Text style={[s.headerSub, { color: C.muted, marginTop: 4 }]}>{data.perceel.adres} · {subTitel}</Text>
         </View>
 
