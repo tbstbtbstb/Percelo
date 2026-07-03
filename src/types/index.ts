@@ -92,6 +92,7 @@ export interface OpdrachtBrief {
 
 export interface WaardestijgingData {
   agrarischPrijsPerHa: number;
+  agrarischeMarktwaarde: number;       // (perceelM2/10000) × agrarischPrijsPerHa — altijd marktprijs, nooit WOZ
   bouwgrondPrijsPerM2Min: number;
   bouwgrondPrijsPerM2Max: number;
   provincie: string;
@@ -106,6 +107,8 @@ export interface WaardestijgingData {
   aanpassingsPct?: number;
   wozWaarde?: number;
   wozPeildatum?: string;
+  betrouwbaarheid: number;             // 0–100, obv aantal bevestigde databronnen
+  betrouwbaarheidLabel: "Hoog" | "Redelijk" | "Matig" | "Laag";
 }
 
 export interface PrecedentPlan {

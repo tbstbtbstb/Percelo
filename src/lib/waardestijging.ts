@@ -213,12 +213,24 @@ export async function berekenWaardestijging(
 
   const combined = sizeFactor * distFactor * drukFactor * bodem.factor;
 
-  // Narrow the range in proportion to available data quality
-  const narrowing =
-    (brkOpp !== null ? 0.08 : 0) +
-    (bodem.naam !== "onbekend" ? 0.07 : 0) +
-    (kern.naam !== "onbekend" ? 0.08 : 0) +
-    (perceel.gemeente ? 0.07 : 0);
+  // Betrouwbaarheid: elke bevestigde databron verhoogt de score
+  // Zonder echte BRK-grootte, bodem, kern of gemeente-data zijn de getallen te onzeker
+  const heeftGemeenteDruk = !!perceel.gemeente && perceel.gemeente in WONINGDRUK;
+  const betrouwbaarheidScore =
+    (brkOpp !== null ? 25 : 0) +           // echte kadastrale grootte gemeten
+    (bodem.naam !== "onbekend" ? 20 : 0) +  // bodemtype bevestigd via BRO
+    (kern.naam !== "onbekend" ? 20 : 0) +   // afstand tot kern gemeten
+    (heeftGemeenteDruk ? 20 : perceel.gemeente ? 10 : 0) + // woningdruk lokaal vs generiek
+    (woz !== null ? 15 : 0);               // WOZ als onafhankelijke cross-check
+
+  const betrouwbaarheidLabel =
+    betrouwbaarheidScore >= 80 ? "Hoog" :
+    betrouwbaarheidScore >= 60 ? "Redelijk" :
+    betrouwbaarheidScore >= 40 ? "Matig" : "Laag";
+
+  // Range-breedte afhankelijk van betrouwbaarheid: hoge score → smallere bandbreedte
+  // Bij lage betrouwbaarheid houden we de brede range — liegen over zekerheid is erger dan eerlijk zijn
+  const narrowing = betrouwbaarheidScore / 100 * 0.28; // max 28% inzwering bij volledige data
 
   let newMin = base.min * combined;
   let newMax = base.max * combined;
@@ -230,8 +242,13 @@ export async function berekenWaardestijging(
 
   const aanpassingsPct = Math.round((combined - 1) * 100);
 
+  // Agrarische marktwaarde: altijd op basis van marktprijs per ha, nooit WOZ
+  // WOZ van agrarische grond ligt structureel 20–40% onder marktwaarde en is geen betrouwbare basis
+  const agrarischeMarktwaarde = Math.round((perceelM2 / 10000) * agrarischPrijsPerHa);
+
   return {
     agrarischPrijsPerHa,
+    agrarischeMarktwaarde,
     bouwgrondPrijsPerM2Min: newMin,
     bouwgrondPrijsPerM2Max: newMax,
     provincie,
@@ -246,5 +263,7 @@ export async function berekenWaardestijging(
     aanpassingsPct,
     wozWaarde: woz?.waarde,
     wozPeildatum: woz?.peildatum,
+    betrouwbaarheid: betrouwbaarheidScore,
+    betrouwbaarheidLabel,
   };
 }
