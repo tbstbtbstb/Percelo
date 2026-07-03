@@ -17,11 +17,7 @@ function BetrouwbaarheidMeter({ score, label }: { score: number; label: string }
       <div style={{ flex: 1, height: "6px", backgroundColor: "#f4f4f4", borderRadius: "999px", overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${score}%`, backgroundColor: kleur, borderRadius: "999px", transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)" }} />
       </div>
-      <span style={{
-        fontSize: "0.6875rem", fontWeight: 700, padding: "0.125rem 0.5rem",
-        backgroundColor: bg, color: kleur, borderRadius: "4px", flexShrink: 0,
-        letterSpacing: "0.04em",
-      }}>
+      <span style={{ fontSize: "0.6875rem", fontWeight: 700, padding: "0.125rem 0.5rem", backgroundColor: bg, color: kleur, borderRadius: "4px", flexShrink: 0, letterSpacing: "0.04em" }}>
         {label}
       </span>
     </div>
@@ -40,44 +36,91 @@ function RegelRij({ label, waarde, sub, kleur }: { label: string; waarde: string
   );
 }
 
+function RangeSlider({ label, waarde, min, max, stap, format, onChange }: {
+  label: string; waarde: number; min: number; max: number; stap: number;
+  format: (v: number) => string; onChange: (v: number) => void;
+}) {
+  const pct = ((waarde - min) / (max - min)) * 100;
+  return (
+    <div style={{ marginBottom: "1rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.375rem" }}>
+        <span style={{ fontSize: "0.8125rem", color: "#525252" }}>{label}</span>
+        <span style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#161616" }}>{format(waarde)}</span>
+      </div>
+      <div style={{ position: "relative", height: "20px", display: "flex", alignItems: "center" }}>
+        <div style={{ position: "absolute", left: 0, right: 0, height: "4px", borderRadius: "999px", backgroundColor: "#e0e0e0" }}>
+          <div style={{ width: `${pct}%`, height: "100%", backgroundColor: "#0f62fe", borderRadius: "999px" }} />
+        </div>
+        <input
+          type="range" min={min} max={max} step={stap} value={waarde}
+          onChange={(e) => onChange(Number(e.target.value))}
+          style={{ position: "absolute", left: 0, right: 0, width: "100%", opacity: 0, cursor: "pointer", height: "20px", margin: 0 }}
+        />
+        <div style={{
+          position: "absolute", left: `${pct}%`, transform: "translateX(-50%)",
+          width: "16px", height: "16px", borderRadius: "50%",
+          backgroundColor: "#0f62fe", border: "2px solid #ffffff",
+          boxShadow: "0 0 0 2px #0f62fe", pointerEvents: "none",
+        }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.25rem" }}>
+        <span style={{ fontSize: "0.6875rem", color: "#8d8d8d" }}>{format(min)}</span>
+        <span style={{ fontSize: "0.6875rem", color: "#8d8d8d" }}>{format(max)}</span>
+      </div>
+    </div>
+  );
+}
+
+type Gevoeligheid = "pessimistisch" | "neutraal" | "optimistisch";
+
+const GEVOELIGHEID_CONFIG: Record<Gevoeligheid, { label: string; bouwFactor: number; kostenFactor: number; kleur: string }> = {
+  pessimistisch: { label: "Pessimistisch", bouwFactor: 0.85, kostenFactor: 1.25, kleur: "#da1e28" },
+  neutraal:      { label: "Neutraal",      bouwFactor: 1.00, kostenFactor: 1.00, kleur: "#0f62fe" },
+  optimistisch:  { label: "Optimistisch",  bouwFactor: 1.10, kostenFactor: 0.85, kleur: "#24a148" },
+};
+
 export function WaardestijgingCalculator({ data }: { data: WaardestijgingData }) {
   const kavelM2 = data.perceelM2 ?? 2500;
 
+  // Eigenaar-waarde override
   const [overschrijfWaarde, setOverschrijfWaarde] = useState<number | null>(null);
   const [bewerkModus, setBewerkModus] = useState(false);
   const [inputWaarde, setInputWaarde] = useState("");
 
-  // Agrarische marktwaarde is altijd het startpunt — WOZ is context, geen basis
+  // Scenario-state
+  const [omzetPct, setOmzetPct] = useState(100);
+  const [aantalKavels, setAantalKavels] = useState(1);
+  const [gevoeligheid, setGevoeligheid] = useState<Gevoeligheid>("neutraal");
+
+  const gev = GEVOELIGHEID_CONFIG[gevoeligheid];
   const agrarischeBase = data.agrarischeMarktwaarde;
   const huidigeWaarde = overschrijfWaarde ?? agrarischeBase;
   const isHandmatig = overschrijfWaarde != null;
 
-  const bouwgrondMin = kavelM2 * data.bouwgrondPrijsPerM2Min;
-  const bouwgrondMax = kavelM2 * data.bouwgrondPrijsPerM2Max;
+  // Scenario-berekening
+  const omzetM2 = kavelM2 * (omzetPct / 100);
+  const bouwgrondMin = omzetM2 * data.bouwgrondPrijsPerM2Min * gev.bouwFactor;
+  const bouwgrondMax = omzetM2 * data.bouwgrondPrijsPerM2Max * gev.bouwFactor;
+  const kostenMin    = data.conversiekostenMin * gev.kostenFactor;
+  const kostenMax    = data.conversiekostenMax * gev.kostenFactor;
 
-  // Maximale verwervingsprijs: wat een koper maximaal kan betalen om quitte te spelen
-  // Conservatief: bouwgrond laag - conversiekosten hoog
-  // Optimistisch: bouwgrond hoog - conversiekosten laag
-  const maxVerwervingMin = bouwgrondMin - data.conversiekostenMax;
-  const maxVerwervingMax = bouwgrondMax - data.conversiekostenMin;
+  const maxVerwervingMin = bouwgrondMin - kostenMax;
+  const maxVerwervingMax = bouwgrondMax - kostenMin;
+  const maxVerwervingPerKavelMin = aantalKavels > 1 ? maxVerwervingMin / aantalKavels : null;
+  const maxVerwervingPerKavelMax = aantalKavels > 1 ? maxVerwervingMax / aantalKavels : null;
 
-  // Netto waardestijging voor huidige eigenaar
   const nettoMin = maxVerwervingMin - huidigeWaarde;
   const nettoMax = maxVerwervingMax - huidigeWaarde;
   const winstPositief = nettoMax > 0;
 
-  // WOZ als context: hoeveel wijkt het af van marktwaarde?
   const wozAfwijkingPct = data.wozWaarde
     ? Math.round(((data.wozWaarde - agrarischeBase) / agrarischeBase) * 100)
     : null;
 
+  const isScenarioGewijzigd = omzetPct !== 100 || aantalKavels !== 1 || gevoeligheid !== "neutraal";
+
   return (
-    <div style={{
-      backgroundColor: "#ffffff",
-      borderRadius: "12px",
-      boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
-      overflow: "hidden",
-    }}>
+    <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)", overflow: "hidden" }}>
       <div style={{ height: "4px", backgroundColor: "#24a148" }} />
       <div style={{ padding: "1.5rem" }}>
 
@@ -91,7 +134,7 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
         </p>
 
         {/* Betrouwbaarheid */}
-        <div style={{ marginBottom: "1.25rem" }}>
+        <div style={{ marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.375rem" }}>
             <span style={{ fontSize: "0.75rem", color: "#525252" }}>Betrouwbaarheid berekening</span>
             <span style={{ fontSize: "0.75rem", color: "#525252" }}>{data.betrouwbaarheid}/100</span>
@@ -99,67 +142,126 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
           <BetrouwbaarheidMeter score={data.betrouwbaarheid} label={data.betrouwbaarheidLabel} />
           {data.betrouwbaarheid < 60 && (
             <p style={{ fontSize: "0.75rem", color: "#b28600", marginTop: "0.375rem" }}>
-              Beperkte lokale data beschikbaar — gebruik deze berekening als richtlijn, niet als beslissingsbasis.
+              Beperkte lokale data beschikbaar — gebruik als richtlijn, niet als beslissingsbasis.
             </p>
           )}
         </div>
 
-        {/* Hero: maximale verwervingsprijs */}
-        <div style={{
-          borderRadius: "10px",
-          backgroundColor: "#f0f4ff",
-          border: "1px solid #d0e0ff",
-          padding: "1.25rem",
-          marginBottom: "1.25rem",
-        }}>
-          <p style={{ fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#0043ce", marginBottom: "0.375rem" }}>
-            Maximale verwervingsprijs
+        {/* ── Scenariocalculator ── */}
+        <div style={{ borderRadius: "10px", backgroundColor: "#f4f4f4", border: "1px solid #e0e0e0", padding: "1.125rem", marginBottom: "1.25rem" }}>
+          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#161616", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "1rem" }}>
+            Scenario doorrekenen
           </p>
-          <p style={{ fontSize: "0.75rem", color: "#4d6fa0", marginBottom: "0.75rem" }}>
-            Wat een koper maximaal kan betalen om quitte te spelen na procedures en conversie
-          </p>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "2rem", fontWeight: 800, color: "#0043ce", lineHeight: 1.1 }}>
-              {eur(maxVerwervingMin)}
-            </span>
-            <span style={{ fontSize: "1rem", color: "#4d6fa0" }}>tot {eur(maxVerwervingMax)}</span>
+
+          <RangeSlider
+            label="Bestemmingsomzetting"
+            waarde={omzetPct}
+            min={10} max={100} stap={5}
+            format={(v) => `${v}% van perceel`}
+            onChange={setOmzetPct}
+          />
+          <RangeSlider
+            label="Aantal woningen / kavels"
+            waarde={aantalKavels}
+            min={1} max={20} stap={1}
+            format={(v) => v === 1 ? "1 kavel" : `${v} kavels`}
+            onChange={setAantalKavels}
+          />
+
+          {/* Gevoeligheidsschakelaar */}
+          <div>
+            <p style={{ fontSize: "0.75rem", color: "#525252", marginBottom: "0.5rem" }}>Marktscenario</p>
+            <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
+              {(["pessimistisch", "neutraal", "optimistisch"] as Gevoeligheid[]).map((g) => {
+                const cfg = GEVOELIGHEID_CONFIG[g];
+                const actief = gevoeligheid === g;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => setGevoeligheid(g)}
+                    style={{
+                      padding: "0.375rem 0.75rem", fontSize: "0.75rem", fontWeight: actief ? 700 : 400,
+                      border: `1.5px solid ${actief ? cfg.kleur : "#c6c6c6"}`,
+                      backgroundColor: actief ? cfg.kleur + "14" : "#ffffff",
+                      color: actief ? cfg.kleur : "#525252",
+                      borderRadius: "4px", cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {cfg.label}
+                    {g === "pessimistisch" && <span style={{ fontSize: "0.6875rem", marginLeft: "0.25rem", opacity: 0.8 }}>−15% prijs / +25% kosten</span>}
+                    {g === "optimistisch"  && <span style={{ fontSize: "0.6875rem", marginLeft: "0.25rem", opacity: 0.8 }}>+10% prijs / −15% kosten</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.5rem" }}>
-            Bouwgrondwaarde − conversiekosten (procedures + onderzoeken)
-          </p>
+
+          {isScenarioGewijzigd && (
+            <button
+              onClick={() => { setOmzetPct(100); setAantalKavels(1); setGevoeligheid("neutraal"); }}
+              style={{ marginTop: "0.75rem", background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: "0.75rem", color: "#525252", textDecoration: "underline" }}
+            >
+              Terugzetten naar basisscenario
+            </button>
+          )}
         </div>
 
-        {/* Opbouw berekening */}
+        {/* Hero: maximale verwervingsprijs */}
+        <div style={{ borderRadius: "10px", backgroundColor: "#f0f4ff", border: "1px solid #d0e0ff", padding: "1.25rem", marginBottom: "1.25rem" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+            <div>
+              <p style={{ fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#0043ce", marginBottom: "0.25rem" }}>
+                Maximale verwervingsprijs
+              </p>
+              <p style={{ fontSize: "0.75rem", color: "#4d6fa0", marginBottom: "0.5rem" }}>
+                Wat een koper maximaal kan betalen om quitte te spelen
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "2rem", fontWeight: 800, color: "#0043ce", lineHeight: 1.1 }}>{eur(maxVerwervingMin)}</span>
+                <span style={{ fontSize: "1rem", color: "#4d6fa0" }}>tot {eur(maxVerwervingMax)}</span>
+              </div>
+            </div>
+            {aantalKavels > 1 && maxVerwervingPerKavelMin !== null && maxVerwervingPerKavelMax !== null && (
+              <div style={{ borderLeft: "2px solid #d0e0ff", paddingLeft: "1rem" }}>
+                <p style={{ fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#0043ce", marginBottom: "0.25rem" }}>
+                  Per kavel ({aantalKavels}×)
+                </p>
+                <p style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0043ce", lineHeight: 1.1 }}>{eur(maxVerwervingPerKavelMin)}</p>
+                <p style={{ fontSize: "0.8125rem", color: "#4d6fa0" }}>tot {eur(maxVerwervingPerKavelMax)}</p>
+              </div>
+            )}
+          </div>
+          {omzetPct < 100 && (
+            <p style={{ fontSize: "0.75rem", color: "#4d6fa0", marginTop: "0.625rem" }}>
+              Op basis van {omzetPct}% bestemmingsomzetting ({Math.round(omzetM2).toLocaleString("nl-NL")} m²)
+            </p>
+          )}
+        </div>
+
+        {/* Opbouw */}
         <div style={{ marginBottom: "1.25rem" }}>
           <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "#525252", marginBottom: "0.25rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>Opbouw</p>
           <RegelRij
-            label={`Bouwgrondwaarde na conversie`}
-            sub={`${data.perceelM2 ? data.perceelM2.toLocaleString("nl-NL") + " m² × " : ""}€${data.bouwgrondPrijsPerM2Min}–${data.bouwgrondPrijsPerM2Max}/m² (${data.regio}${data.aanpassingsPct !== undefined && data.aanpassingsPct !== 0 ? `, ${data.aanpassingsPct > 0 ? "+" : ""}${data.aanpassingsPct}%` : ""})`}
+            label="Bouwgrondwaarde na conversie"
+            sub={`${Math.round(omzetM2).toLocaleString("nl-NL")} m² × €${Math.round(data.bouwgrondPrijsPerM2Min * gev.bouwFactor)}–${Math.round(data.bouwgrondPrijsPerM2Max * gev.bouwFactor)}/m² (${data.regio}${data.aanpassingsPct !== undefined && data.aanpassingsPct !== 0 ? `, ${data.aanpassingsPct > 0 ? "+" : ""}${data.aanpassingsPct}%` : ""}${gevoeligheid !== "neutraal" ? `, ${gev.label.toLowerCase()}` : ""})`}
             waarde={`${eur(bouwgrondMin)} – ${eur(bouwgrondMax)}`}
             kleur="#24a148"
           />
           <RegelRij
             label="Conversiekosten"
-            sub="Procedures, onderzoeken, leges — zie actieplan"
-            waarde={`− ${eur(data.conversiekostenMin)} – − ${eur(data.conversiekostenMax)}`}
+            sub={`Procedures, onderzoeken, leges${gevoeligheid !== "neutraal" ? ` (${gev.label.toLowerCase()})` : ""}`}
+            waarde={`− ${eur(kostenMin)} – − ${eur(kostenMax)}`}
             kleur="#b28600"
           />
-          <div style={{ paddingTop: "0.625rem" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
-              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#161616" }}>= Maximale verwervingsprijs</span>
-              <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#0043ce", flexShrink: 0 }}>{eur(maxVerwervingMin)} – {eur(maxVerwervingMax)}</span>
-            </div>
+          <div style={{ paddingTop: "0.625rem", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#161616" }}>= Maximale verwervingsprijs</span>
+            <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#0043ce", flexShrink: 0 }}>{eur(maxVerwervingMin)} – {eur(maxVerwervingMax)}</span>
           </div>
         </div>
 
         {/* Netto waardestijging voor eigenaar */}
-        <div style={{
-          borderRadius: "10px",
-          backgroundColor: winstPositief ? "#f0fdf4" : "#fff5f5",
-          border: `1px solid ${winstPositief ? "#bbf7d0" : "#fecaca"}`,
-          padding: "1.25rem",
-          marginBottom: "1.25rem",
-        }}>
+        <div style={{ borderRadius: "10px", backgroundColor: winstPositief ? "#f0fdf4" : "#fff5f5", border: `1px solid ${winstPositief ? "#bbf7d0" : "#fecaca"}`, padding: "1.25rem", marginBottom: "1.25rem" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
             <div>
               <p style={{ fontSize: "0.6875rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: winstPositief ? "#15803d" : "#b91c1c", marginBottom: "0.25rem" }}>
@@ -170,14 +272,11 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
               </p>
             </div>
             <div style={{ textAlign: "right", flexShrink: 0 }}>
-              <p style={{ fontSize: "1.5rem", fontWeight: 800, color: winstPositief ? "#15803d" : "#b91c1c", lineHeight: 1.1 }}>
-                {eur(nettoMin)}
-              </p>
+              <p style={{ fontSize: "1.5rem", fontWeight: 800, color: winstPositief ? "#15803d" : "#b91c1c", lineHeight: 1.1 }}>{eur(nettoMin)}</p>
               <p style={{ fontSize: "0.8125rem", color: winstPositief ? "#16a34a" : "#dc2626" }}>tot {eur(nettoMax)}</p>
             </div>
           </div>
 
-          {/* Huidige waarde — bewerkbaar */}
           <div style={{ borderTop: `1px solid ${winstPositief ? "#bbf7d0" : "#fecaca"}`, paddingTop: "0.75rem" }}>
             {bewerkModus ? (
               <div style={{ display: "flex", alignItems: "flex-end", gap: "0.5rem" }}>
@@ -239,16 +338,9 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
           </div>
         </div>
 
-        {/* WOZ als context (niet als basis) */}
+        {/* WOZ als context */}
         {data.wozWaarde && (
-          <div style={{
-            borderRadius: "8px",
-            backgroundColor: "#fafafa",
-            border: "1px solid #e0e0e0",
-            padding: "0.875rem",
-            marginBottom: "1.25rem",
-            display: "flex", alignItems: "flex-start", gap: "0.625rem",
-          }}>
+          <div style={{ borderRadius: "8px", backgroundColor: "#fafafa", border: "1px solid #e0e0e0", padding: "0.875rem", marginBottom: "1.25rem", display: "flex", alignItems: "flex-start", gap: "0.625rem" }}>
             <Information size={14} style={{ color: "#525252", flexShrink: 0, marginTop: "0.2rem" }} />
             <div>
               <p style={{ fontSize: "0.75rem", color: "#161616", fontWeight: 600, marginBottom: "0.25rem" }}>
@@ -260,8 +352,7 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
                 )}
               </p>
               <p style={{ fontSize: "0.75rem", color: "#525252" }}>
-                WOZ van agrarische grond ligt structureel 20–40% onder marktwaarde door de pacht-gebaseerde taxatiemethode.
-                De berekening gebruikt daarom de agrarische marktprijs, niet de WOZ.
+                WOZ van agrarische grond ligt structureel 20–40% onder marktwaarde door de pacht-gebaseerde taxatiemethode. De berekening gebruikt de agrarische marktprijs.
               </p>
             </div>
           </div>
@@ -269,9 +360,7 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
 
         {/* Context chips */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem", marginBottom: "1rem" }}>
-          {data.bodemtype && data.bodemtype !== "onbekend" && (
-            <Tag type="gray" size="sm">Bodem: {data.bodemtype}</Tag>
-          )}
+          {data.bodemtype && data.bodemtype !== "onbekend" && <Tag type="gray" size="sm">Bodem: {data.bodemtype}</Tag>}
           {data.afstandTotKernKm !== undefined && data.afstandTotKernNaam && data.afstandTotKernNaam !== "onbekend" && (
             <Tag type="gray" size="sm">{data.afstandTotKernKm} km van {data.afstandTotKernNaam}</Tag>
           )}
