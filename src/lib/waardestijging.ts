@@ -252,6 +252,7 @@ export async function berekenWaardestijging(
     bouwgrondPrijsPerM2Min: newMin,
     bouwgrondPrijsPerM2Max: newMax,
     provincie,
+    gemeente: perceel.gemeente,
     regio: base.label,
     databron: "Kadaster Q4 2025 + NVM 2024–2025 + BRK + BRO bodemkaart",
     conversiekostenMin: kostenRaming.totaalMin,

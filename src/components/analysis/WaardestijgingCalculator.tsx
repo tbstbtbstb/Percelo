@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tag, TextInput } from "@carbon/react";
-import { Growth, Information, Edit, Checkmark } from "@carbon/icons-react";
-import type { WaardestijgingData } from "@/types";
+import { Growth, Information, Edit, Checkmark, ArrowUp, ArrowDown, Subtract } from "@carbon/icons-react";
+import type { WaardestijgingData, GemeenteMarktData } from "@/types";
 
 function eur(bedrag: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(bedrag);
@@ -86,6 +86,19 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
   const [overschrijfWaarde, setOverschrijfWaarde] = useState<number | null>(null);
   const [bewerkModus, setBewerkModus] = useState(false);
   const [inputWaarde, setInputWaarde] = useState("");
+
+  // Gemeente marktdata (CBS)
+  const [markt, setMarkt] = useState<GemeenteMarktData | null>(null);
+  const [marktLaden, setMarktLaden] = useState(false);
+  useEffect(() => {
+    if (!data.gemeente) return;
+    setMarktLaden(true);
+    fetch(`/api/gemeente-markt?gemeente=${encodeURIComponent(data.gemeente)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setMarkt(d))
+      .catch(() => null)
+      .finally(() => setMarktLaden(false));
+  }, [data.gemeente]);
 
   // Scenario-state
   const [omzetPct, setOmzetPct] = useState(100);
@@ -238,6 +251,62 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
             </p>
           )}
         </div>
+
+        {/* Lokale woningmarkt (CBS) */}
+        {(marktLaden || markt) && (
+          <div style={{ borderRadius: "10px", backgroundColor: "#f4f4f4", border: "1px solid #e0e0e0", padding: "1rem", marginBottom: "1.25rem" }}>
+            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#161616", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: marktLaden ? 0 : "0.75rem" }}>
+              Woningmarkt {data.gemeente}
+            </p>
+
+            {marktLaden && (
+              <p style={{ fontSize: "0.75rem", color: "#8d8d8d", marginTop: "0.375rem" }}>Marktdata ophalen…</p>
+            )}
+
+            {markt && !marktLaden && (() => {
+              const trend = markt.trendPct;
+              const TrendIcon = trend === null ? Subtract : trend > 0 ? ArrowUp : ArrowDown;
+              const trendKleur = trend === null ? "#8d8d8d" : trend > 0 ? "#24a148" : "#da1e28";
+
+              return (
+                <>
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.625rem" }}>
+                    {/* Transacties */}
+                    <div style={{ flex: 1, minWidth: "8rem", backgroundColor: "#ffffff", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid #e0e0e0" }}>
+                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Verkopen (12 mnd)</p>
+                      <p style={{ fontSize: "1.25rem", fontWeight: 800, color: "#161616", lineHeight: 1.1 }}>
+                        {markt.aantalVerkopen12m.toLocaleString("nl-NL")}
+                      </p>
+                      <p style={{ fontSize: "0.6875rem", color: "#8d8d8d", marginTop: "0.125rem" }}>transacties</p>
+                    </div>
+                    {/* Gemiddelde prijs */}
+                    <div style={{ flex: 1, minWidth: "8rem", backgroundColor: "#ffffff", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid #e0e0e0" }}>
+                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Gem. verkoopprijs</p>
+                      <p style={{ fontSize: "1.25rem", fontWeight: 800, color: "#161616", lineHeight: 1.1 }}>
+                        {eur(markt.gemiddeldeVerkoopprijs)}
+                      </p>
+                      <p style={{ fontSize: "0.6875rem", color: "#8d8d8d", marginTop: "0.125rem" }}>bestaande woning</p>
+                    </div>
+                    {/* Trend */}
+                    <div style={{ flex: 1, minWidth: "8rem", backgroundColor: "#ffffff", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid #e0e0e0" }}>
+                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Prijstrend</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                        <TrendIcon size={16} style={{ color: trendKleur, flexShrink: 0 }} />
+                        <p style={{ fontSize: "1.25rem", fontWeight: 800, color: trendKleur, lineHeight: 1.1 }}>
+                          {trend !== null ? `${trend > 0 ? "+" : ""}${trend}%` : "—"}
+                        </p>
+                      </div>
+                      <p style={{ fontSize: "0.6875rem", color: "#8d8d8d", marginTop: "0.125rem" }}>jaar-op-jaar</p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: "0.6875rem", color: "#8d8d8d" }}>
+                    {markt.bron} · Bestaande koopwoningen; hogere vraag vergroot interesse in bouwgrond
+                  </p>
+                </>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Opbouw */}
         <div style={{ marginBottom: "1.25rem" }}>

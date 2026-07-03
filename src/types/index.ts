@@ -90,12 +90,24 @@ export interface OpdrachtBrief {
   inhoud: string;
 }
 
+export interface GemeenteMarktData {
+  gemeente: string;
+  gmCode: string;
+  aantalVerkopen12m: number;
+  gemiddeldeVerkoopprijs: number;
+  trendPct: number | null;
+  meestRecentKwartaal: string;
+  meestRecentKwartaalLabel: string;
+  bron: string;
+}
+
 export interface WaardestijgingData {
   agrarischPrijsPerHa: number;
   agrarischeMarktwaarde: number;       // (perceelM2/10000) × agrarischPrijsPerHa — altijd marktprijs, nooit WOZ
   bouwgrondPrijsPerM2Min: number;
   bouwgrondPrijsPerM2Max: number;
   provincie: string;
+  gemeente?: string;
   regio: string;
   databron: string;
   conversiekostenMin: number;
