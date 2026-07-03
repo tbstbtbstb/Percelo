@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { GemeenteMarktData } from "@/types";
 
-// CBS 83913NED: Bestaande koopwoningen; verkoopprijzen en volumes, per gemeente per kwartaal
-const CBS_BASE = "https://opendata.cbs.nl/ODataApi/OData/83913NED";
+// CBS 83625NED: Bestaande koopwoningen; gemiddelde verkoopprijzen per gemeente
+// 728 gemeenten, jaarlijks, loopt tot 2024
+const CBS_BASE = "https://opendata.cbs.nl/ODataApi/OData/83625NED";
 
-// Ruim bereik zodat we altijd de meest recente beschikbare data vinden
-const KWARTALEN = [
-  "2025KW01", "2025KW02", "2025KW03", "2025KW04",
-  "2024KW01", "2024KW02", "2024KW03", "2024KW04",
-  "2023KW01", "2023KW02", "2023KW03", "2023KW04",
-  "2022KW01", "2022KW02", "2022KW03", "2022KW04",
-];
+const JAREN = ["2025JJ00", "2024JJ00", "2023JJ00", "2022JJ00", "2021JJ00"];
 
 type CBSRij = {
   Perioden: string;
-  VerkochteWoningen_4: number | null;
-  GemiddeldeVerkoopprijs_7: number | null;
-  OntwikkelingTOVEenJaarEerder_3: number | null;
+  GemiddeldeVerkoopprijs_1: number | null;
 };
 
 async function getGMCode(gemeente: string): Promise<string | null> {
@@ -35,9 +28,9 @@ async function getGMCode(gemeente: string): Promise<string | null> {
   }
 }
 
-function kwartaalLabel(key: string): string {
-  const [jaar, kw] = key.split("KW");
-  return `Q${kw} ${jaar}`;
+function jaarLabel(key: string): string {
+  // "2024JJ00" → "2024"
+  return key.slice(0, 4);
 }
 
 export async function GET(req: NextRequest) {
@@ -51,11 +44,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "gemeente niet gevonden" }, { status: 404 });
   }
 
-  const kwFilter = KWARTALEN.map((p) => `Perioden eq '${p}'`).join(" or ");
+  const jaarFilter = JAREN.map((p) => `Perioden eq '${p}'`).join(" or ");
   const url =
     `${CBS_BASE}/TypedDataSet` +
-    `?$filter=RegioS eq '${gmCode}' and (${kwFilter})` +
-    `&$select=Perioden,VerkochteWoningen_4,GemiddeldeVerkoopprijs_7,OntwikkelingTOVEenJaarEerder_3` +
+    `?$filter=RegioS eq '${gmCode}' and (${jaarFilter})` +
+    `&$select=Perioden,GemiddeldeVerkoopprijs_1` +
     `&$format=json`;
 
   let rijen: CBSRij[];
@@ -66,51 +59,40 @@ export async function GET(req: NextRequest) {
     });
     if (!res.ok) return NextResponse.json({ error: "CBS niet bereikbaar" }, { status: 502 });
     const json = await res.json();
-    rijen = json.value ?? [];
+    rijen = (json.value ?? []) as CBSRij[];
   } catch {
     return NextResponse.json({ error: "CBS timeout" }, { status: 502 });
   }
 
-  // Alleen kwartaaldata, gesorteerd van recent naar oud
-  const kwartalen = rijen
-    .filter((r) => r.Perioden.includes("KW"))
+  // Sorteer van recent naar oud
+  const jaren = rijen
+    .filter((r) => r.GemiddeldeVerkoopprijs_1 !== null && r.GemiddeldeVerkoopprijs_1 > 0)
     .sort((a, b) => b.Perioden.localeCompare(a.Perioden));
 
-  if (kwartalen.length === 0) {
+  if (jaren.length === 0) {
     return NextResponse.json({ error: "geen gemeentedata in CBS" }, { status: 404 });
   }
 
-  // Laatste 4 beschikbare kwartalen = "afgelopen jaar"
-  const recent = kwartalen.slice(0, 4);
+  const recentste = jaren[0];
+  const gemiddeldeVerkoopprijs = recentste.GemiddeldeVerkoopprijs_1!;
+  const recentJaar = jaarLabel(recentste.Perioden);
 
-  const aantalVerkopen12m = recent.reduce((s, q) => s + (q.VerkochteWoningen_4 ?? 0), 0);
-
-  // Gewogen gemiddelde verkoopprijs (transactieaantal als gewicht)
-  const totWaarde = recent.reduce(
-    (s, q) => s + (q.GemiddeldeVerkoopprijs_7 ?? 0) * (q.VerkochteWoningen_4 ?? 0),
-    0
-  );
-  const totTrans = recent.reduce((s, q) => s + (q.VerkochteWoningen_4 ?? 0), 0);
-  const gemiddeldeVerkoopprijs = totTrans > 0 ? Math.round(totWaarde / totTrans) : 0;
-
-  // Gemiddelde jaar-op-jaar trend over de laatste 4 kwartalen
-  const trendWaarden = recent
-    .map((q) => q.OntwikkelingTOVEenJaarEerder_3)
-    .filter((v): v is number => v !== null);
-  const trendPct =
-    trendWaarden.length > 0
-      ? Math.round((trendWaarden.reduce((a, b) => a + b, 0) / trendWaarden.length) * 10) / 10
-      : null;
+  // Trend: verkoopprijs huidig jaar vs vorig jaar
+  let trendPct: number | null = null;
+  if (jaren.length >= 2) {
+    const vorigeprijs = jaren[1].GemiddeldeVerkoopprijs_1!;
+    trendPct = Math.round(((gemiddeldeVerkoopprijs - vorigeprijs) / vorigeprijs) * 1000) / 10;
+  }
 
   const result: GemeenteMarktData = {
     gemeente,
     gmCode,
-    aantalVerkopen12m,
+    aantalVerkopen12m: 0,         // niet beschikbaar in 83625NED; UI verbergt dit als 0
     gemiddeldeVerkoopprijs,
     trendPct,
-    meestRecentKwartaal: kwartalen[0].Perioden,
-    meestRecentKwartaalLabel: kwartaalLabel(kwartalen[0].Perioden),
-    bron: `CBS Statline 83913NED · meest recent: ${kwartaalLabel(kwartalen[0].Perioden)}`,
+    meestRecentKwartaal: recentste.Perioden,
+    meestRecentKwartaalLabel: recentJaar,
+    bron: `CBS Statline 83625NED · ${recentJaar}`,
   };
 
   return NextResponse.json(result);

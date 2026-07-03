@@ -271,17 +271,9 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
               return (
                 <>
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.625rem" }}>
-                    {/* Transacties */}
-                    <div style={{ flex: 1, minWidth: "8rem", backgroundColor: "#ffffff", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid #e0e0e0" }}>
-                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Verkopen (12 mnd)</p>
-                      <p style={{ fontSize: "1.25rem", fontWeight: 800, color: "#161616", lineHeight: 1.1 }}>
-                        {markt.aantalVerkopen12m.toLocaleString("nl-NL")}
-                      </p>
-                      <p style={{ fontSize: "0.6875rem", color: "#8d8d8d", marginTop: "0.125rem" }}>transacties</p>
-                    </div>
                     {/* Gemiddelde prijs */}
                     <div style={{ flex: 1, minWidth: "8rem", backgroundColor: "#ffffff", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid #e0e0e0" }}>
-                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Gem. verkoopprijs</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Gem. verkoopprijs {markt.meestRecentKwartaalLabel}</p>
                       <p style={{ fontSize: "1.25rem", fontWeight: 800, color: "#161616", lineHeight: 1.1 }}>
                         {eur(markt.gemiddeldeVerkoopprijs)}
                       </p>
@@ -289,7 +281,7 @@ export function WaardestijgingCalculator({ data }: { data: WaardestijgingData })
                     </div>
                     {/* Trend */}
                     <div style={{ flex: 1, minWidth: "8rem", backgroundColor: "#ffffff", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid #e0e0e0" }}>
-                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Prijstrend</p>
+                      <p style={{ fontSize: "0.6875rem", color: "#525252", marginBottom: "0.25rem" }}>Prijsontwikkeling</p>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                         <TrendIcon size={16} style={{ color: trendKleur, flexShrink: 0 }} />
                         <p style={{ fontSize: "1.25rem", fontWeight: 800, color: trendKleur, lineHeight: 1.1 }}>
