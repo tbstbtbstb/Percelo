@@ -21783,5 +21783,25 @@
     "margeMin": 381000,
     "margeMax": 650000,
     "gescoordOp": "2026-07-14T06:28:30.733Z"
+  },
+  {
+    "id": "17841847254284489",
+    "perceelId": "BER00-X-9058",
+    "straatAdres": "Agrarisch perceel Bernheze",
+    "gemeente": "Bernheze",
+    "provincie": "Noord-Brabant",
+    "oppervlakteM2": 2500,
+    "lat": 51.735,
+    "lon": 5.553,
+    "bestemming": "Agrarisch met waarden - Landschap",
+    "reedsBouwgrond": false,
+    "slagingskans": 67,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 20000,
+    "bouwgrondWaardeMin": 560000,
+    "bouwgrondWaardeMax": 800000,
+    "margeMin": 340000,
+    "margeMax": 580000,
+    "gescoordOp": "2026-07-16T06:52:05.428Z"
   }
 ]
