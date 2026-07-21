@@ -21903,5 +21903,25 @@
     "margeMin": 505000,
     "margeMax": 820000,
     "gescoordOp": "2026-07-20T07:31:57.175Z"
+  },
+  {
+    "id": "17846181736613500",
+    "perceelId": "NOO00-X-5474",
+    "straatAdres": "Agrarisch perceel Noordoostpolder",
+    "gemeente": "Noordoostpolder",
+    "provincie": "Flevoland",
+    "oppervlakteM2": 3200,
+    "lat": 52.651,
+    "lon": 5.729,
+    "bestemming": "Agrarisch",
+    "reedsBouwgrond": false,
+    "slagingskans": 69,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 29000,
+    "bouwgrondWaardeMin": 694000,
+    "bouwgrondWaardeMax": 992000,
+    "margeMin": 409000,
+    "margeMax": 707000,
+    "gescoordOp": "2026-07-21T07:16:13.661Z"
   }
 ]
