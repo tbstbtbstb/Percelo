@@ -21923,5 +21923,25 @@
     "margeMin": 409000,
     "margeMax": 707000,
     "gescoordOp": "2026-07-21T07:16:13.661Z"
+  },
+  {
+    "id": "1784705050374441",
+    "perceelId": "ZEE00-X-2656",
+    "straatAdres": "Agrarisch perceel Zeewolde",
+    "gemeente": "Zeewolde",
+    "provincie": "Flevoland",
+    "oppervlakteM2": 2800,
+    "lat": 52.281,
+    "lon": 5.453,
+    "bestemming": "Agrarisch",
+    "reedsBouwgrond": false,
+    "slagingskans": 71,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 25000,
+    "bouwgrondWaardeMin": 608000,
+    "bouwgrondWaardeMax": 868000,
+    "margeMin": 359000,
+    "margeMax": 619000,
+    "gescoordOp": "2026-07-22T07:24:10.374Z"
   }
 ]
