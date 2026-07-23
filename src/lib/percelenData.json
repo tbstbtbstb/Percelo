@@ -21943,5 +21943,25 @@
     "margeMin": 359000,
     "margeMax": 619000,
     "gescoordOp": "2026-07-22T07:24:10.374Z"
+  },
+  {
+    "id": "17847900908188477",
+    "perceelId": "LAN00-X-3986",
+    "straatAdres": "Agrarisch perceel Land van Cuijk",
+    "gemeente": "Land van Cuijk",
+    "provincie": "Noord-Brabant",
+    "oppervlakteM2": 2800,
+    "lat": 51.713,
+    "lon": 5.885,
+    "bestemming": "Agrarisch met waarden - Landschaps- en Natuurwaarden",
+    "reedsBouwgrond": false,
+    "slagingskans": 67,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 22000,
+    "bouwgrondWaardeMin": 627000,
+    "bouwgrondWaardeMax": 896000,
+    "margeMin": 381000,
+    "margeMax": 650000,
+    "gescoordOp": "2026-07-23T07:01:30.818Z"
   }
 ]
