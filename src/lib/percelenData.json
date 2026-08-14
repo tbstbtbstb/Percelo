@@ -285,26 +285,6 @@
     "margeMax": 1353000
   },
   {
-    "id": "17840105107339694",
-    "perceelId": "LAN00-X-2052",
-    "straatAdres": "Agrarisch perceel Land van Cuijk",
-    "gemeente": "Land van Cuijk",
-    "provincie": "Noord-Brabant",
-    "oppervlakteM2": 2800,
-    "lat": 51.735,
-    "lon": 5.885,
-    "bestemming": "Agrarisch met waarden - Landschapswaarden",
-    "reedsBouwgrond": false,
-    "slagingskans": 70,
-    "scoreKlasse": "hoog",
-    "geschatteAankoopprijs": 22000,
-    "bouwgrondWaardeMin": 627000,
-    "bouwgrondWaardeMax": 896000,
-    "margeMin": 381000,
-    "margeMax": 650000,
-    "gescoordOp": "2026-07-14T06:28:30.733Z"
-  },
-  {
     "id": "17841847254284489",
     "perceelId": "BER00-X-9058",
     "straatAdres": "Agrarisch perceel Bernheze",
