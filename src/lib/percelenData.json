@@ -22023,5 +22023,25 @@
     "margeMin": 384000,
     "margeMax": 663000,
     "gescoordOp": "2026-09-07T10:04:00.864Z"
+  },
+  {
+    "id": "1788860791332897",
+    "perceelId": "PEE00-X-6391",
+    "straatAdres": "Agrarisch perceel Peel en Maas",
+    "gemeente": "Peel en Maas",
+    "provincie": "Limburg",
+    "oppervlakteM2": 2500,
+    "lat": 51.397,
+    "lon": 6.145,
+    "bestemming": "Agrarisch met waarden",
+    "reedsBouwgrond": false,
+    "slagingskans": 60,
+    "scoreKlasse": "gemiddeld",
+    "geschatteAankoopprijs": 15000,
+    "bouwgrondWaardeMin": 438000,
+    "bouwgrondWaardeMax": 625000,
+    "margeMin": 223000,
+    "margeMax": 410000,
+    "gescoordOp": "2026-09-08T09:46:31.332Z"
   }
 ]
