@@ -22043,5 +22043,25 @@
     "margeMin": 223000,
     "margeMax": 410000,
     "gescoordOp": "2026-09-08T09:46:31.332Z"
+  },
+  {
+    "id": "17889464986247920",
+    "perceelId": "HOR00-X-5540",
+    "straatAdres": "Agrarisch perceel Horst aan de Maas",
+    "gemeente": "Horst aan de Maas",
+    "provincie": "Limburg",
+    "oppervlakteM2": 2800,
+    "lat": 51.431,
+    "lon": 6.163,
+    "bestemming": "Agrarisch met waarden",
+    "reedsBouwgrond": false,
+    "slagingskans": 69,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 17000,
+    "bouwgrondWaardeMin": 490000,
+    "bouwgrondWaardeMax": 700000,
+    "margeMin": 249000,
+    "margeMax": 459000,
+    "gescoordOp": "2026-09-09T09:34:58.624Z"
   }
 ]
