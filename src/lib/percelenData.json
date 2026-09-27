@@ -285,26 +285,6 @@
     "margeMax": 1353000
   },
   {
-    "id": "1787841091105641",
-    "perceelId": "SCH00-X-4625",
-    "straatAdres": "Agrarisch perceel Schagen",
-    "gemeente": "Schagen",
-    "provincie": "Noord-Holland",
-    "oppervlakteM2": 3000,
-    "lat": 52.823,
-    "lon": 4.887,
-    "bestemming": "Agrarisch - 1",
-    "reedsBouwgrond": false,
-    "slagingskans": 70,
-    "scoreKlasse": "hoog",
-    "geschatteAankoopprijs": 42000,
-    "bouwgrondWaardeMin": 945000,
-    "bouwgrondWaardeMax": 1350000,
-    "margeMin": 663000,
-    "margeMax": 1068000,
-    "gescoordOp": "2026-08-27T14:31:31.105Z"
-  },
-  {
     "id": "17881697249682406",
     "perceelId": "OMM00-X-7045",
     "straatAdres": "Agrarisch perceel Ommen",
