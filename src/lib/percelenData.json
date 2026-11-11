@@ -21823,5 +21823,25 @@
     "margeMin": 619000,
     "margeMax": 997000,
     "gescoordOp": "2026-11-09T12:09:47.854Z"
+  },
+  {
+    "id": "1794393972351227",
+    "perceelId": "BRO00-X-1606",
+    "straatAdres": "Agrarisch perceel Bronckhorst",
+    "gemeente": "Bronckhorst",
+    "provincie": "Gelderland",
+    "oppervlakteM2": 2800,
+    "lat": 52.033,
+    "lon": 6.407,
+    "bestemming": "Landelijk gebied;Veegplan 2024-1B",
+    "reedsBouwgrond": false,
+    "slagingskans": 67,
+    "scoreKlasse": "hoog",
+    "geschatteAankoopprijs": 20000,
+    "bouwgrondWaardeMin": 568000,
+    "bouwgrondWaardeMax": 812000,
+    "margeMin": 324000,
+    "margeMax": 568000,
+    "gescoordOp": "2026-11-11T10:46:12.351Z"
   }
 ]
